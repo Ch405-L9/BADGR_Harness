@@ -354,9 +354,18 @@ def append_report(task: Task, final_status: str, note: str) -> None:
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     report_file = REPORTS_DIR / f"{utc_now().date().isoformat()}.md"
     if not report_file.exists():
-        report_file.write_text("# Daily Harness Report\n\n", encoding="utf-8")
+        report_file.write_text(
+            f"# BADGR Harness — Daily Report {utc_now().date().isoformat()}\n\n"
+            f"| Time (UTC) | Task ID | Type | Status | Note |\n"
+            f"|------------|---------|------|--------|------|\n",
+            encoding="utf-8",
+        )
+    ts = utc_now().strftime("%H:%M:%S")
+    task_type = _task_type_value(task)
     with report_file.open("a", encoding="utf-8") as handle:
-        handle.write(f"- {utc_now().isoformat()} | {_task_id(task)} | {final_status} | {note}\n")
+        handle.write(
+            f"| {ts} | `{_task_id(task)[-16:]}` | {task_type} | **{final_status}** | {note} |\n"
+        )
 
 
 def make_event(
@@ -423,12 +432,17 @@ def run_task(user_goal: str) -> Dict[str, Any]:
 
     task_type = _task_attr(task, "task_type", "tasktype")
     primary_model = choose_primary_model(task_type, registry)
+    primary_role = (
+        "planner"
+        if task_type in {TaskType.PLANNING, TaskType.SUMMARIZATION}
+        else "worker"
+    )
     primary_event = make_event(
         task=task,
         action="primary_model_selected",
         status=_event_status("STARTED"),
         model_used=primary_model,
-        role_used="worker",
+        role_used=primary_role,
         next_action="run_primary_attempt",
         parent_event_id=_event_id(start_event),
     )

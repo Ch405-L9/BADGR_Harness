@@ -106,6 +106,19 @@ def main() -> int:
             print(f"    FAIL  lane '{lane_name}' has no model assigned")
             failures.append(f"No model covers lane: {lane_name}")
 
+    # 4. Unregistered models — show what's installed but not in the registry
+    if installed:
+        registered_names = {
+            config.get("model_name") or config.get("modelname", "")
+            for config in registry.values()
+        }
+        unregistered = [m for m in installed if m not in registered_names]
+        if unregistered:
+            print(f"\n[4] Unregistered models ({len(unregistered)} installed but not in models.yaml):")
+            for m in sorted(unregistered):
+                print(f"    --    {m}")
+            print("    These models are available to add to models.yaml for use in the harness.")
+
     # Result
     print()
     if failures:
