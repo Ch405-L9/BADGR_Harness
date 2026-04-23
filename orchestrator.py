@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional
@@ -51,6 +52,11 @@ try:
     from validator import ValidationOutcome, validate_worker_output
 except ImportError:
     from validator import ValidationOutcome, validateworkeroutput as validate_worker_output
+
+try:
+    from state.state_manager import record_task as _record_state_task
+except ImportError:
+    _record_state_task = None  # type: ignore[assignment]
 
 
 DEFAULT_CONSTRAINTS = ["strict_json", "ask_if_under_98_confident"]
@@ -449,6 +455,9 @@ def attempt_model(
 
 def run_task(user_goal: str) -> Dict[str, Any]:
     registry = load_model_registry(MODELS_FILE)
+    _run_start = time.monotonic()
+    _models_tried: list[str] = []
+    _task_errors: list[str] = []
 
     # Sidechain: try micro-model classification before keyword routing
     micro_model = choose_micro_model(registry)
@@ -470,6 +479,7 @@ def run_task(user_goal: str) -> Dict[str, Any]:
 
     task_type = _task_attr(task, "task_type", "tasktype")
     primary_model = choose_primary_model(task_type, registry, user_goal=user_goal)
+    _models_tried.append(primary_model)
     if task_type in {TaskType.PLANNING, TaskType.SUMMARIZATION}:
         primary_role = "planner"
     elif task_type in {TaskType.CLASSIFICATION, TaskType.EXTRACTION}:
@@ -487,6 +497,23 @@ def run_task(user_goal: str) -> Dict[str, Any]:
         parent_event_id=_event_id(start_event),
     )
 
+    def _record(status: str) -> None:
+        if _record_state_task is None:
+            return
+        try:
+            _record_state_task(
+                task_id=_task_id(task),
+                task_type=_task_type_value(task),
+                status=status,
+                primary_model=primary_model,
+                routing_method=routing_method,
+                models_tried=_models_tried,
+                latency_s=round(time.monotonic() - _run_start, 2),
+                errors=_task_errors if _task_errors else None,
+            )
+        except Exception:
+            pass
+
     first_try = attempt_model(task, primary_model, "worker", registry=registry)
     if first_try.valid:
         _set_task_attr(task, _task_status("SUCCESS"), "status")
@@ -501,8 +528,10 @@ def run_task(user_goal: str) -> Dict[str, Any]:
             parent_event_id=_event_id(primary_event),
         )
         append_report(task, "success", f"Primary model succeeded: {primary_model}")
+        _record("success")
         return first_try.data or {}
 
+    _task_errors.append(first_try.error or "primary_attempt_invalid")
     retry_event = make_event(
         task=task,
         action="primary_attempt_invalid",
@@ -535,9 +564,12 @@ def run_task(user_goal: str) -> Dict[str, Any]:
             parent_event_id=_event_id(retry_event),
         )
         append_report(task, "success", f"Primary retry succeeded: {primary_model}")
+        _record("success")
         return second_try.data or {}
 
+    _task_errors.append(second_try.error or "primary_retry_invalid")
     fallback_model = choose_fallback_model(primary_model, registry)
+    _models_tried.append(fallback_model)
     fallback_event = make_event(
         task=task,
         action="fallback_model_selected",
@@ -570,9 +602,12 @@ def run_task(user_goal: str) -> Dict[str, Any]:
             parent_event_id=_event_id(fallback_event),
         )
         append_report(task, "success", f"Fallback model succeeded: {fallback_model}")
+        _record("success")
         return fallback_try.data or {}
 
+    _task_errors.append(fallback_try.error or "fallback_invalid")
     supervisor_model = choose_supervisor_model(registry)
+    _models_tried.append(supervisor_model)
     supervisor_event = make_event(
         task=task,
         action="supervisor_selected",
@@ -609,6 +644,7 @@ def run_task(user_goal: str) -> Dict[str, Any]:
                 parent_event_id=_event_id(supervisor_event),
             )
             append_report(task, "needs_clarification", clarification)
+            _record("needs_clarification")
             return {"status": "needs_clarification", "question": clarification}
 
         _set_task_attr(task, _task_status("SUCCESS"), "status")
@@ -623,6 +659,7 @@ def run_task(user_goal: str) -> Dict[str, Any]:
             parent_event_id=_event_id(supervisor_event),
         )
         append_report(task, "success", f"Supervisor succeeded: {supervisor_model}")
+        _record("success")
         return data
 
     _set_task_attr(task, _task_status("FAILED"), "status")
@@ -639,6 +676,7 @@ def run_task(user_goal: str) -> Dict[str, Any]:
     )
     clarification = "I am not confident enough to continue. Please restate the goal in one short sentence."
     append_report(task, "failed", clarification)
+    _record("failed")
     return {"status": "failed", "question": clarification}
 
 

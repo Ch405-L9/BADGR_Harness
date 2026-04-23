@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 LOGS_DIR = Path(__file__).resolve().parent / "logs"
+STATE_DIR = Path(__file__).resolve().parent / "state"
 
 
 def _load_events(log_file: Path) -> list[dict[str, Any]]:
@@ -183,6 +184,71 @@ def print_report(result: dict[str, Any]) -> None:
     print()
 
 
+def _load_state() -> dict[str, Any]:
+    state_file = STATE_DIR / "runtime_state.json"
+    if not state_file.exists():
+        return {}
+    try:
+        return json.loads(state_file.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def print_state_summary(state: dict[str, Any]) -> None:
+    if not state or state.get("schema_version") != "2.0":
+        return
+
+    lifetime = state.get("lifetime", {})
+    total = lifetime.get("total_tasks", 0)
+    if total == 0:
+        return
+
+    print(f"\n{'='*64}")
+    print("  BADGR Harness — Lifetime State Summary")
+    print(f"{'='*64}")
+
+    success = lifetime.get("success", 0)
+    clarify = lifetime.get("needs_clarification", 0)
+    failed = lifetime.get("failed", 0)
+    success_rate = round(100 * success / total, 1) if total else 0.0
+    print(f"\n  Total tasks:     {total}")
+    print(f"  Success:         {success}  ({success_rate}%)")
+    if clarify:
+        print(f"  Clarification:   {clarify}")
+    if failed:
+        print(f"  Failed:          {failed}")
+
+    model_rows = []
+    for model_name, stats in state.get("model_stats", {}).items():
+        uses = stats.get("uses", 0)
+        successes = stats.get("successes", 0)
+        failures = stats.get("failures", 0)
+        outcome_total = successes + failures
+        total_lat = stats.get("total_latency_s", 0.0)
+        avg_lat = round(total_lat / outcome_total, 1) if outcome_total else 0.0
+        model_rows.append((uses, model_name, stats.get("primary_uses", 0),
+                           stats.get("fallback_uses", 0), successes, failures, avg_lat))
+    model_rows.sort(reverse=True)
+
+    if model_rows:
+        print(f"\n  {'MODEL':<30} {'USES':>5} {'PRIM':>5} {'FALL':>5} {'OK':>5} {'ERR':>5} {'AVG_LAT':>8}")
+        print(f"  {'-'*62}")
+        for uses, name, prim, fall, ok, err, lat in model_rows:
+            print(f"  {name:<30} {uses:>5} {prim:>5} {fall:>5} {ok:>5} {err:>5} {lat:>7.1f}s")
+
+    patterns = state.get("error_patterns", {})
+    if patterns:
+        top = sorted(patterns.items(), key=lambda x: x[1], reverse=True)[:5]
+        print(f"\n  Top error patterns:")
+        for pat, count in top:
+            print(f"    [{count:>3}x] {pat[:60]}")
+
+    updated = state.get("last_updated", "")
+    if updated:
+        print(f"\n  State last updated: {updated[:19]} UTC")
+    print()
+
+
 def main() -> None:
     args = sys.argv[1:]
 
@@ -203,6 +269,8 @@ def main() -> None:
             print_report(analyze(lf))
         else:
             print(f"Log not found: {lf}")
+
+    print_state_summary(_load_state())
 
 
 if __name__ == "__main__":
