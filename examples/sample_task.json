@@ -1,0 +1,12 @@
+{
+  "task_id": "task_sample_001",
+  "user_goal": "Classify this request and return strict JSON",
+  "task_type": "classification",
+  "constraints": [
+    "strict_json",
+    "ask_if_under_98_confident"
+  ],
+  "expected_output": "classification_result",
+  "confidence_required": 0.98,
+  "status": "queued"
+}

@@ -1,0 +1,62 @@
+models:
+  qwen_supervisor:
+    provider: ollama
+    model_name: qwen2.5:14b
+    roles:
+      - supervisor
+      - planner
+      - synthesizer
+      - escalation
+    strengths:
+      - long_context_reasoning
+      - structured_output
+      - synthesis
+      - recovery
+    weaknesses:
+      - slower_than_7b_models
+      - higher_local_resource_use
+    temperature: 0.2
+    max_tokens: 2400
+    timeout_seconds: 180
+    fallback: null
+
+  qwen_coder_worker:
+    provider: ollama
+    model_name: qwen2.5-coder:7b
+    roles:
+      - code
+      - extraction
+      - classification
+      - formatting
+    strengths:
+      - code_generation
+      - code_editing
+      - json_friendly
+      - fast_enough
+    weaknesses:
+      - weaker_on_ambiguous_planning
+    temperature: 0.1
+    max_tokens: 1600
+    timeout_seconds: 120
+    fallback: mistral_worker
+
+  mistral_worker:
+    provider: ollama
+    model_name: mistral:7b
+    roles:
+      - general
+      - fallback
+      - extraction
+      - summarization
+      - classification
+    strengths:
+      - instruction_following
+      - solid_fallback
+      - cheap_local_backup
+    weaknesses:
+      - weaker_than_supervisor_on_complex_synthesis
+    temperature: 0.1
+    max_tokens: 1600
+    timeout_seconds: 120
+    fallback: qwen_supervisor
+
