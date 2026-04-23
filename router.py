@@ -19,6 +19,24 @@ KEYWORD_MAP = {
     TaskType.PLANNING: ["plan", "design", "architecture", "roadmap", "strategy"],
 }
 
+# Keywords that signal BADGR domain work — only then should badgr_analyst be used.
+# Kept intentionally specific to avoid false positives on generic business language.
+BADGR_DOMAIN_KEYWORDS = [
+    # Trading / market intel
+    "trading", "swing trade", "stock", "equity", "ticker", "candlestick",
+    "indicator", "momentum", "breakout", "support level", "resistance",
+    "market data", "market intel", "volatility", "moving average",
+    # Lead generation
+    "lead generation", "leads", "prospect", "pipeline", "outreach", "crm",
+    # Campaign / ad performance
+    "campaign", "ad performance", "click-through", "engagement rate",
+    "impression", "social media analytics",
+    # Web performance
+    "web performance", "page speed", "bounce rate", "seo",
+    # BADGR brand
+    "badgr",
+]
+
 
 def _model_name(config: Dict[str, Any]) -> str:
     if "model_name" in config:
@@ -43,6 +61,12 @@ def _registry_find_role(registry: Dict[str, Any], role: str) -> Optional[Dict[st
     return None
 
 
+def is_badgr_domain(user_goal: str) -> bool:
+    """Return True if the goal contains BADGR-domain signals warranting the analyst model."""
+    text = user_goal.lower()
+    return any(kw in text for kw in BADGR_DOMAIN_KEYWORDS)
+
+
 def load_model_registry(models_file: Path) -> Dict[str, Any]:
     with models_file.open("r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle) or {}
@@ -57,7 +81,7 @@ def classify_task(user_goal: str) -> TaskType:
     return TaskType.GENERAL
 
 
-def choose_primary_model(task_type: TaskType, registry: Dict[str, Any]) -> str:
+def choose_primary_model(task_type: TaskType, registry: Dict[str, Any], user_goal: str = "") -> str:
     if task_type == TaskType.CODE:
         return _model_name(
             _registry_get(registry, "qwen_coder_worker", "qwencoderworker")
@@ -69,10 +93,12 @@ def choose_primary_model(task_type: TaskType, registry: Dict[str, Any]) -> str:
         )
 
     if task_type in {TaskType.CLASSIFICATION, TaskType.EXTRACTION}:
-        # Use the domain-specialized analyst model if registered; fall back to mistral
-        analyst = _registry_find_role(registry, "analyst")
-        if analyst:
-            return _model_name(analyst)
+        # Only route to the domain specialist when the goal is clearly BADGR-domain work.
+        # Generic classification/extraction stays on the general worker.
+        if user_goal and is_badgr_domain(user_goal):
+            analyst = _registry_find_role(registry, "analyst")
+            if analyst:
+                return _model_name(analyst)
         return _model_name(
             _registry_get(registry, "mistral_worker", "mistralworker")
         )
@@ -111,6 +137,8 @@ def choose_micro_model(registry: Dict[str, Any]) -> Optional[str]:
 
 # Backward-compatible aliases
 KEYWORDMAP = KEYWORD_MAP
+BADGRDOMAINKEYWORDS = BADGR_DOMAIN_KEYWORDS
+isbadgrdomain = is_badgr_domain
 loadmodelregistry = load_model_registry
 classifytask = classify_task
 chooseprimarymodel = choose_primary_model

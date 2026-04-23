@@ -469,11 +469,12 @@ def run_task(user_goal: str) -> Dict[str, Any]:
     )
 
     task_type = _task_attr(task, "task_type", "tasktype")
-    primary_model = choose_primary_model(task_type, registry)
+    primary_model = choose_primary_model(task_type, registry, user_goal=user_goal)
     if task_type in {TaskType.PLANNING, TaskType.SUMMARIZATION}:
         primary_role = "planner"
     elif task_type in {TaskType.CLASSIFICATION, TaskType.EXTRACTION}:
-        primary_role = "analyst"
+        from router import is_badgr_domain
+        primary_role = "analyst" if is_badgr_domain(user_goal) else "worker"
     else:
         primary_role = "worker"
     primary_event = make_event(

@@ -81,7 +81,7 @@ def test_run_task_uses_model_routing_when_micro_available(monkeypatch) -> None:
         orchestrator, "model_classify_task",
         lambda goal, model, reg: TaskType.CLASSIFICATION,
     )
-    monkeypatch.setattr(orchestrator, "choose_primary_model", lambda *a, **kw: "badgr-analyst:latest")
+    monkeypatch.setattr(orchestrator, "choose_primary_model", lambda *a, **kw: "mistral:7b")
     monkeypatch.setattr(orchestrator, "append_log", lambda e: None)
     monkeypatch.setattr(orchestrator, "append_report", lambda *a, **kw: None)
     monkeypatch.setattr(
@@ -102,6 +102,55 @@ def test_run_task_uses_model_routing_when_micro_available(monkeypatch) -> None:
     )
     result = orchestrator.run_task("route this request please")
     assert result["task_type"] == "classification"
+
+
+def test_run_task_routes_domain_goal_to_analyst(monkeypatch) -> None:
+    from router import choose_primary_model as real_choose_primary_model
+    from pathlib import Path
+    from router import load_model_registry
+    registry = load_model_registry(Path("models.yaml"))
+
+    monkeypatch.setattr(orchestrator, "load_model_registry", lambda _: registry)
+    monkeypatch.setattr(orchestrator, "choose_micro_model", lambda reg: None)
+    monkeypatch.setattr(orchestrator, "append_log", lambda e: None)
+    monkeypatch.setattr(orchestrator, "append_report", lambda *a, **kw: None)
+    monkeypatch.setattr(
+        orchestrator,
+        "attempt_model",
+        lambda *a, **kw: ValidationOutcome(
+            valid=True,
+            data={
+                "task_type": "classification",
+                "summary": "Trading setup classified.",
+                "confidence": 0.99,
+                "recommended_action": "Route to analyst.",
+                "needs_clarification": False,
+                "clarification_question": None,
+                "labels": ["swing_trade"],
+            },
+        ),
+    )
+    selected_models: list[str] = []
+    original_attempt = orchestrator.attempt_model
+
+    def capture_attempt(task, model_name, *args, **kwargs):
+        selected_models.append(model_name)
+        return ValidationOutcome(
+            valid=True,
+            data={
+                "task_type": "classification",
+                "summary": "Trading setup classified.",
+                "confidence": 0.99,
+                "recommended_action": "Route to analyst.",
+                "needs_clarification": False,
+                "clarification_question": None,
+                "labels": ["swing_trade"],
+            },
+        )
+
+    monkeypatch.setattr(orchestrator, "attempt_model", capture_attempt)
+    orchestrator.run_task("Classify these swing trading setups by momentum indicator")
+    assert selected_models[0] == "badgr-analyst:latest"
 
 
 def test_run_task_falls_back_to_keyword_when_no_micro(monkeypatch) -> None:
