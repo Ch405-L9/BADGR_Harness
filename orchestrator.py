@@ -21,6 +21,7 @@ except ImportError:
 try:
     from router import (
         choose_fallback_model,
+        choose_micro_model,
         choose_primary_model,
         choose_supervisor_model,
         classify_task,
@@ -29,6 +30,7 @@ try:
 except ImportError:
     from router import (
         choosefallbackmodel as choose_fallback_model,
+        choosemicromodel as choose_micro_model,
         chooseprimarymodel as choose_primary_model,
         choosesupervisormodel as choose_supervisor_model,
         classifytask as classify_task,
@@ -63,6 +65,7 @@ loadmodelregistry = load_model_registry
 chooseprimarymodel = choose_primary_model
 choosefallbackmodel = choose_fallback_model
 choosesupervisormodel = choose_supervisor_model
+choosemicromodel = choose_micro_model
 classifytask = classify_task
 
 
@@ -241,8 +244,8 @@ def next_task_id() -> str:
     return f"task_{utc_now().strftime('%Y%m%d%H%M%S%f')}"
 
 
-def normalize_task(user_goal: str) -> Task:
-    task_type = classify_task(user_goal)
+def normalize_task(user_goal: str, task_type_override: Optional[TaskType] = None) -> Task:
+    task_type = task_type_override if task_type_override is not None else classify_task(user_goal)
     expected_output = {
         TaskType.CODE: "code_result",
         TaskType.CLASSIFICATION: "classification_result",
@@ -271,8 +274,9 @@ def build_prompt(task: Task, role_prompt: str, retry_note: str = "") -> str:
     schema_hint = {
         TaskType.CODE: (
             '{"task_type":"code","summary":"...","confidence":0.99,'
-            '"recommended_action":"...","needs_clarification":false,'
-            '"clarification_question":null,"changes":["..."]}'
+            '"recommended_action":"brief description of the fix","needs_clarification":false,'
+            '"clarification_question":null,"changes":["..."],'
+            '"code_block":"full corrected code here as a plain string"}'
         ),
         TaskType.CLASSIFICATION: (
             '{"task_type":"classification","summary":"...","confidence":0.99,'
@@ -341,6 +345,32 @@ def call_ollama(model_name: str, prompt: str, timeout_seconds: int = 120, temper
     except json.JSONDecodeError as exc:
         raise RuntimeError(f"Ollama returned non-JSON response: {exc}") from exc
     return body.get("response", "")
+
+
+_VALID_TASK_TYPES = {t.value for t in TaskType}
+
+_MICRO_CLASSIFY_PROMPT = (
+    "You are a task classifier. Read the goal and return exactly one JSON object.\n"
+    "Valid values for task_type: code, classification, extraction, summarization, planning, general\n\n"
+    'Return: {{"task_type": "<one of the above>"}}\n\n'
+    "Goal: {goal}"
+)
+
+
+def model_classify_task(user_goal: str, micro_model: str, registry: Dict[str, Any]) -> Optional[TaskType]:
+    """Use the micro model to classify a task. Returns None on any failure — caller falls back to keyword routing."""
+    model_config = _model_config_by_name(micro_model, registry)
+    timeout_seconds = int(model_config.get("timeout_seconds", model_config.get("timeoutseconds", 30)))
+    try:
+        prompt = _MICRO_CLASSIFY_PROMPT.format(goal=user_goal)
+        raw = call_ollama(micro_model, prompt, timeout_seconds=timeout_seconds, temperature=0.0)
+        parsed = json.loads(raw) if raw.strip().startswith("{") else json.loads(raw[raw.find("{"):raw.rfind("}") + 1])
+        task_type_str = str(parsed.get("task_type", "")).lower().strip()
+        if task_type_str in _VALID_TASK_TYPES:
+            return TaskType(task_type_str)
+    except Exception:  # noqa: BLE001 — micro classification failure is always non-fatal
+        pass
+    return None
 
 
 def append_log(event: HarnessEvent) -> None:
@@ -419,24 +449,33 @@ def attempt_model(
 
 def run_task(user_goal: str) -> Dict[str, Any]:
     registry = load_model_registry(MODELS_FILE)
-    task = normalize_task(user_goal)
+
+    # Sidechain: try micro-model classification before keyword routing
+    micro_model = choose_micro_model(registry)
+    detected_type: Optional[TaskType] = None
+    if micro_model:
+        detected_type = model_classify_task(user_goal, micro_model, registry)
+
+    task = normalize_task(user_goal, task_type_override=detected_type)
     _set_task_attr(task, _task_status("RUNNING"), "status")
 
+    routing_method = "model" if detected_type is not None else "keyword"
     start_event = make_event(
         task=task,
         action="task_started",
         status=_event_status("STARTED"),
         next_action="route_primary_model",
-        details={"task_type": _task_type_value(task)},
+        details={"task_type": _task_type_value(task), "routing_method": routing_method},
     )
 
     task_type = _task_attr(task, "task_type", "tasktype")
     primary_model = choose_primary_model(task_type, registry)
-    primary_role = (
-        "planner"
-        if task_type in {TaskType.PLANNING, TaskType.SUMMARIZATION}
-        else "worker"
-    )
+    if task_type in {TaskType.PLANNING, TaskType.SUMMARIZATION}:
+        primary_role = "planner"
+    elif task_type in {TaskType.CLASSIFICATION, TaskType.EXTRACTION}:
+        primary_role = "analyst"
+    else:
+        primary_role = "worker"
     primary_event = make_event(
         task=task,
         action="primary_model_selected",
@@ -622,6 +661,8 @@ appendlogevent = append_log
 appendreporttask = append_report
 makeevent = make_event
 attemptmodel = attempt_model
+modelclassifytask = model_classify_task
+normalizetask = normalize_task
 runtask = run_task
 
 if __name__ == "__main__":

@@ -25,8 +25,6 @@ models:
     model_name: qwen2.5-coder:7b
     roles:
       - code
-      - extraction
-      - classification
       - formatting
     strengths:
       - code_generation
@@ -40,15 +38,50 @@ models:
     timeout_seconds: 120
     fallback: mistral_worker
 
+  badgr_analyst:
+    provider: ollama
+    model_name: badgr-analyst:latest
+    roles:
+      - analyst
+      - classification
+      - extraction
+      - market_intel
+    strengths:
+      - domain_specialized
+      - badgr_context_aware
+      - classification_accuracy
+      - data_extraction
+    weaknesses:
+      - unknown_base_model_limits
+    temperature: 0.1
+    max_tokens: 1600
+    timeout_seconds: 120
+    fallback: mistral_worker
+
+  dmape_qwen:
+    provider: ollama
+    model_name: dmape-qwen:latest
+    roles:
+      - content
+      - marketing
+      - social
+    strengths:
+      - marketing_content
+      - badgr_brand_aware
+    weaknesses:
+      - narrow_specialization
+    temperature: 0.2
+    max_tokens: 1600
+    timeout_seconds: 120
+    fallback: mistral_worker
+
   mistral_worker:
     provider: ollama
     model_name: mistral:7b
     roles:
       - general
       - fallback
-      - extraction
       - summarization
-      - classification
     strengths:
       - instruction_following
       - solid_fallback
@@ -60,3 +93,20 @@ models:
     timeout_seconds: 120
     fallback: qwen_supervisor
 
+  llama_micro:
+    provider: ollama
+    model_name: llama3.2:3b
+    roles:
+      - micro_classifier
+      - pre_router
+    strengths:
+      - fast
+      - low_resource
+      - adequate_classification
+    weaknesses:
+      - shallow_reasoning
+      - not_for_main_work
+    temperature: 0.0
+    max_tokens: 50
+    timeout_seconds: 30
+    fallback: null

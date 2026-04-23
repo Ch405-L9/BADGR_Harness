@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 import yaml
 
@@ -35,6 +35,14 @@ def _registry_get(registry: Dict[str, Any], *keys: str) -> Dict[str, Any]:
     raise KeyError(f"None of the registry keys were found: {keys}")
 
 
+def _registry_find_role(registry: Dict[str, Any], role: str) -> Optional[Dict[str, Any]]:
+    """Return first registry entry whose roles list contains `role`, or None."""
+    for config in registry.values():
+        if role in config.get("roles", []):
+            return config
+    return None
+
+
 def load_model_registry(models_file: Path) -> Dict[str, Any]:
     with models_file.open("r", encoding="utf-8") as handle:
         data = yaml.safe_load(handle) or {}
@@ -52,28 +60,25 @@ def classify_task(user_goal: str) -> TaskType:
 def choose_primary_model(task_type: TaskType, registry: Dict[str, Any]) -> str:
     if task_type == TaskType.CODE:
         return _model_name(
-            _registry_get(
-                registry,
-                "qwen_coder_worker",
-                "qwencoderworker",
-            )
+            _registry_get(registry, "qwen_coder_worker", "qwencoderworker")
         )
 
     if task_type in {TaskType.PLANNING, TaskType.SUMMARIZATION}:
         return _model_name(
-            _registry_get(
-                registry,
-                "qwen_supervisor",
-                "qwensupervisor",
-            )
+            _registry_get(registry, "qwen_supervisor", "qwensupervisor")
+        )
+
+    if task_type in {TaskType.CLASSIFICATION, TaskType.EXTRACTION}:
+        # Use the domain-specialized analyst model if registered; fall back to mistral
+        analyst = _registry_find_role(registry, "analyst")
+        if analyst:
+            return _model_name(analyst)
+        return _model_name(
+            _registry_get(registry, "mistral_worker", "mistralworker")
         )
 
     return _model_name(
-        _registry_get(
-            registry,
-            "mistral_worker",
-            "mistralworker",
-        )
+        _registry_get(registry, "mistral_worker", "mistralworker")
     )
 
 
@@ -86,22 +91,22 @@ def choose_fallback_model(primary_model_name: str, registry: Dict[str, Any]) -> 
             break
 
     return _model_name(
-        _registry_get(
-            registry,
-            "qwen_supervisor",
-            "qwensupervisor",
-        )
+        _registry_get(registry, "qwen_supervisor", "qwensupervisor")
     )
 
 
 def choose_supervisor_model(registry: Dict[str, Any]) -> str:
     return _model_name(
-        _registry_get(
-            registry,
-            "qwen_supervisor",
-            "qwensupervisor",
-        )
+        _registry_get(registry, "qwen_supervisor", "qwensupervisor")
     )
+
+
+def choose_micro_model(registry: Dict[str, Any]) -> Optional[str]:
+    """Return the micro-classifier model name if one is registered, else None."""
+    config = _registry_find_role(registry, "micro_classifier")
+    if config:
+        return _model_name(config)
+    return None
 
 
 # Backward-compatible aliases
@@ -111,3 +116,4 @@ classifytask = classify_task
 chooseprimarymodel = choose_primary_model
 choosefallbackmodel = choose_fallback_model
 choosesupervisormodel = choose_supervisor_model
+choosemicromodel = choose_micro_model

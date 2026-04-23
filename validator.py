@@ -31,6 +31,7 @@ class BaseWorkerResponse(BaseModel):
 
 class CodeWorkerResponse(BaseWorkerResponse):
     changes: list[str] = Field(default_factory=list)
+    code_block: Optional[str] = Field(None)
 
 
 class ClassificationWorkerResponse(BaseWorkerResponse):
