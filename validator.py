@@ -6,6 +6,9 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+# Fields that must be lists of strings — models sometimes return lists of dicts.
+_LIST_STR_FIELDS = {"changes", "labels", "key_points", "steps"}
+
 try:
     from schemas.task_schema import Task, TaskType
 except ImportError:
@@ -74,6 +77,26 @@ def parse_json(raw_output: str) -> Dict[str, Any]:
     return json.loads(_extract_json_object(raw_output))
 
 
+def _coerce_list_fields(parsed: Dict[str, Any]) -> Dict[str, Any]:
+    """Stringify any non-string items in list-of-string fields before schema validation.
+
+    Models occasionally return lists of dicts (e.g. changes:[{"description":"..."}])
+    instead of lists of strings. Rather than hard-reject valid intent with a wrong shape,
+    convert each non-string item to its JSON string representation so the harness can
+    accept and log the result rather than burning a retry on a recoverable format error.
+    """
+    result = dict(parsed)
+    for field in _LIST_STR_FIELDS:
+        if field in result and isinstance(result[field], list):
+            result[field] = [
+                item if isinstance(item, str)
+                else json.dumps(item, ensure_ascii=False) if isinstance(item, (dict, list))
+                else str(item)
+                for item in result[field]
+            ]
+    return result
+
+
 def _task_attr(task: Task, *names: str, default: Any = None) -> Any:
     for name in names:
         if hasattr(task, name):
@@ -99,6 +122,7 @@ def validate_worker_output(task: Task, raw_output: str) -> ValidationOutcome:
 
     try:
         expected_type = _task_type_value(task)
+        parsed = _coerce_list_fields(parsed)
 
         if expected_type == TaskType.CODE.value:
             response = CodeWorkerResponse.model_validate(parsed)

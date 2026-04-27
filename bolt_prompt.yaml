@@ -1,0 +1,31 @@
+task: generate_file_indexer_script
+model: qwen2.5-coder:7b
+constraints: [strict_json, no_file_changes, local_ollama_only]
+
+system_prompt: |
+  Generate/run Python indexer for /home/t0n34781/Documents/BOLT-AD asset (10 files max).
+  Output: JSON with path, filename, category, portfolio_relevant, size, created.
+  Categories: software_development(py/js), business_plans(pdf/txt), digital_artwork(png/jpg), etc.
+  Portfolio if matches BADGR: software_dev/business_plans/artwork/website_dev.
+
+user_goal: |
+  Write executable Python script:
+  1. Target: /home/t0n34781/Documents/BOLT-AD asset
+  2. Limit 10 files (skip .*, 0-byte)
+  3. Extract: full_path, rel_path, filename, size_bytes, created_iso, category (ext rules), portfolio (match list)
+  4. Save output/bolt_test.json
+  5. Print "✅ [N] files indexed"
+
+rules:
+  cats:
+    py/js/ts/sh: software_development
+    pdf/txt: business_plans
+    png/jpg/gif: digital_artwork
+    md: engineering_practices
+    html/css: website_development
+    json/yaml: config_or_index
+  portfolio_match: [software_development, business_plans, digital_artwork, engineering_practices, website_development]
+
+output:
+  script: complete_python_code
+  expected_files: output/bolt_test.json

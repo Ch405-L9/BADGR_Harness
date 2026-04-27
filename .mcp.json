@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "pro-hunter": {
+      "type": "stdio",
+      "command": "/home/t0n34781/projects/pro_hunter/.venv/bin/python",
+      "args": ["/home/t0n34781/projects/pro_hunter/mcp_server.py"],
+      "env": {}
+    }
+  }
+}

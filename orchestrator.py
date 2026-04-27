@@ -275,6 +275,34 @@ def read_prompt(name: str) -> str:
     return _prompt_path(name).read_text(encoding="utf-8").strip()
 
 
+def _rag_context(user_goal: str) -> str:
+    """Pull relevant corpus chunks. Uses 5s connect timeout — skips if Ollama is busy."""
+    try:
+        import chromadb, requests as _req
+        from pathlib import Path as _P
+        if not _P("rag_db").exists():
+            return ""
+        # Short embed timeout — if Ollama is busy, skip RAG rather than block
+        vec_resp = _req.post(
+            "http://localhost:11434/api/embeddings",
+            json={"model": "nomic-embed-text", "prompt": user_goal[:500]},
+            timeout=(3, 5),   # (connect, read) — fail fast
+        )
+        vec_resp.raise_for_status()
+        vec = vec_resp.json()["embedding"]
+        client = chromadb.PersistentClient(path="rag_db")
+        col = client.get_or_create_collection("badgr_corpus")
+        if col.count() == 0:
+            return ""
+        results = col.query(query_embeddings=[vec], n_results=3)
+        parts = []
+        for doc, meta in zip(results["documents"][0], results["metadatas"][0]):
+            parts.append(f"[{meta.get('source','?')}]\n{doc[:400]}")
+        return "\n\n---\n\n".join(parts)
+    except Exception:
+        return ""
+
+
 def build_prompt(task: Task, role_prompt: str, retry_note: str = "") -> str:
     task_type = _task_attr(task, "task_type", "tasktype")
     schema_hint = {
@@ -312,6 +340,11 @@ def build_prompt(task: Task, role_prompt: str, retry_note: str = "") -> str:
     )
 
     retry_block = f"{retry_note}\n" if retry_note else ""
+    # Use pre-fetched cache from run_task if available, else fetch now
+    rag_ctx = getattr(task, "_rag_ctx_cache", None)
+    if rag_ctx is None:
+        rag_ctx = _rag_context(_user_goal(task))
+    rag_block = f"\n--- BADGR Knowledge Base Context ---\n{rag_ctx}\n--- End Context ---\n" if rag_ctx else ""
     return (
         f"{role_prompt}\n\n"
         f"Task ID: {_task_id(task)}\n"
@@ -320,6 +353,7 @@ def build_prompt(task: Task, role_prompt: str, retry_note: str = "") -> str:
         f"Constraints: {', '.join(_constraints(task))}\n"
         f"Required Confidence: {_required_confidence(task)}\n"
         f"User Goal: {_user_goal(task)}\n"
+        f"{rag_block}"
         f"{retry_block}"
         f"Return valid JSON only using this exact shape:\n{schema_hint}\n"
     )
@@ -468,13 +502,26 @@ def run_task(user_goal: str) -> Dict[str, Any]:
     task = normalize_task(user_goal, task_type_override=detected_type)
     _set_task_attr(task, _task_status("RUNNING"), "status")
 
+    # Pre-fetch RAG context so hit/miss is known before logging start event
+    _rag_ctx_cache = _rag_context(user_goal)
+    _rag_hit = bool(_rag_ctx_cache)
+    try:
+        object.__setattr__(task, "_rag_ctx_cache", _rag_ctx_cache)
+        object.__setattr__(task, "_rag_hit", _rag_hit)
+    except Exception:
+        pass
+
     routing_method = "model" if detected_type is not None else "keyword"
     start_event = make_event(
         task=task,
         action="task_started",
         status=_event_status("STARTED"),
         next_action="route_primary_model",
-        details={"task_type": _task_type_value(task), "routing_method": routing_method},
+        details={
+            "task_type": _task_type_value(task),
+            "routing_method": routing_method,
+            "rag_hit": _rag_hit,
+        },
     )
 
     task_type = _task_attr(task, "task_type", "tasktype")

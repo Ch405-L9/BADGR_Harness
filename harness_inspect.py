@@ -104,6 +104,8 @@ def analyze(log_file: Path) -> dict[str, Any]:
             total_latency += latency
             completed += 1
 
+        rag_hit = tevents[0].get("details", {}).get("rag_hit")
+
         tasks.append({
             "task_id": task_id,
             "task_type": task_type,
@@ -114,6 +116,7 @@ def analyze(log_file: Path) -> dict[str, Any]:
             "retries": sum(1 for e in tevents if e["action"] == "primary_attempt_invalid"),
             "escalations": sum(1 for e in tevents if e["action"] == "supervisor_selected"),
             "errors": errors,
+            "rag_hit": rag_hit,
         })
 
     avg_latency = round(total_latency / completed, 1) if completed else 0.0
@@ -156,14 +159,15 @@ def print_report(result: dict[str, Any]) -> None:
         return
 
     # Per-task table
-    print(f"\n{'TASK ID':<28} {'TYPE':<14} {'STATUS':<8} {'LATENCY':>8}  {'MODELS'}")
-    print("-" * 80)
+    print(f"\n{'TASK ID':<28} {'TYPE':<14} {'STATUS':<8} {'RAG':<5} {'LATENCY':>8}  {'MODELS'}")
+    print("-" * 88)
     for t in sorted(tasks, key=lambda x: x["task_id"]):
         icon = _status_icon(t["status"])
         model_str = " → ".join(t["models"]) if t["models"] else "—"
         complete_mark = "" if t["complete"] else " [incomplete]"
+        rag_icon = "HIT" if t.get("rag_hit") is True else ("---" if t.get("rag_hit") is False else " ? ")
         print(
-            f"  {t['task_id'][-20:]:<26} {t['task_type']:<14} {icon:<8} "
+            f"  {t['task_id'][-20:]:<26} {t['task_type']:<14} {icon:<8} {rag_icon:<5} "
             f"{t['latency_s']:>6.1f}s  {model_str}{complete_mark}"
         )
         if t["retries"]:
@@ -173,12 +177,15 @@ def print_report(result: dict[str, Any]) -> None:
 
     # Aggregate stats
     s = stats
+    rag_hits   = sum(1 for t in tasks if t.get("rag_hit") is True)
+    rag_misses = sum(1 for t in tasks if t.get("rag_hit") is False)
     print(f"\n{'─'*64}")
     print(f"  Tasks total:     {s['total']}")
     print(f"  Completed:       {s['completed']}")
     if s["incomplete"]:
         print(f"  Incomplete:      {s['incomplete']}  (shell or run interrupted)")
     print(f"  Avg latency:     {s['avg_latency_s']}s")
+    print(f"  RAG hits:        {rag_hits}  misses: {rag_misses}")
     print(f"  By outcome:      ", end="")
     print("  ".join(f"{k}={v}" for k, v in sorted(s.get("by_status", {}).items())))
     print()

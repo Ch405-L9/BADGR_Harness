@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.2",
+  "document_type": "shn.json handoff",
+  "project_name": "BADGR Harness",
+  "project_path": "/home/t0n34781/projects/badgr_harness",
+  "status": "Phase 6 active - context-aware routing and registry expansion",
+  "scope": "Full handoff through Phase 5 validation and Phase 6 start",
+  "phase_map": {
+    "phase_1": {
+      "name": "Vision and constraints",
+      "status": "complete"
+    },
+    "phase_2": {
+      "name": "Architecture framing",
+      "status": "complete"
+    },
+    "phase_3": {
+      "name": "Grounding in real BADGR assets",
+      "status": "complete"
+    },
+    "phase_4": {
+      "name": "Live validation",
+      "status": "complete"
+    },
+    "phase_5": {
+      "name": "Schema hardening and observability",
+      "status": "complete/validated"
+    },
+    "phase_6": {
+      "name": "Context-aware routing and registry expansion",
+      "status": "active"
+    }
+  },
+  "phase_5_summary": {
+    "summary": "Schema hardening and observability validated through strict JSON success on code lane, log inspection, and unregistered model surfacing.",
+    "deliverables": [
+      "format:json enforcement confirmed zero retries/escalations on code tasks",
+      "9 unregistered models listed including badgr-analyst:latest",
+      "Logs inspected showing improved recovery profile"
+    ],
+    "remaining_gap": "CodeWorkerResponse lacks dedicated code_block field; code spills into recommended_action"
+  },
+  "phase_6_objective": "Register custom BADGR models, add micro-classification tier replacing keyword matching, extend code schema with code_block field",
+  "next_actions": [
+    "Restore badgr-analyst:latest to models.yaml",
+    "Configure llama3.2:3b as micro-classifier for goal pre-routing",
+    "Add code_block:string field to CodeWorkerResponse schema"
+  ]
+}

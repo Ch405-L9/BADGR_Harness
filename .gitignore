@@ -8,3 +8,30 @@ logs/*.jsonl
 reports/*.md
 state/runtime_state.json
 _archive/
+
+# Large binary data — do not commit
+rag_db/
+
+# Stale embedded copy — canonical is /home/t0n34781/projects/pro_hunter
+pro_hunter/
+
+# Build/run output
+output/
+corpus_harvest/
+corpus_harvest_log.txt
+corpus_harvest2_log.txt
+
+# Scratch/notes/output — not source
+*.txt
+!README.txt
+RAG_foundation.txt
+testing_output_results.txt
+*_test_results.txt
+*_results.txt
+phase*_report.txt
+report_phase*.txt
+(.01)_*.json
+(.01)_*.txt
+(TEST)*.txt
+(CONT.)*.txt
+(ts02)*.txt

@@ -53,3 +53,46 @@ def test_rejects_planning_without_steps() -> None:
     result = validate_worker_output(task, raw)
     assert result.valid is False
     assert "step" in (result.error or "")
+
+
+def test_coerces_changes_list_of_dicts_to_strings() -> None:
+    task = _make_task(TaskType.CODE)
+    # Model returned changes as a list of objects instead of strings
+    raw = (
+        '{"task_type":"code","summary":"Fixed.","confidence":0.99,'
+        '"recommended_action":"Apply fix.","needs_clarification":false,'
+        '"clarification_question":null,'
+        '"changes":[{"description":"Replace line 5","line":5}]}'
+    )
+    result = validate_worker_output(task, raw)
+    assert result.valid is True
+    assert result.data is not None
+    assert len(result.data["changes"]) == 1
+    assert isinstance(result.data["changes"][0], str)
+    assert "Replace line 5" in result.data["changes"][0]
+
+
+def test_coerces_labels_list_of_dicts_to_strings() -> None:
+    task = _make_task(TaskType.CLASSIFICATION)
+    raw = (
+        '{"task_type":"classification","summary":"Classified.","confidence":0.99,'
+        '"recommended_action":"Route.","needs_clarification":false,'
+        '"clarification_question":null,'
+        '"labels":[{"label":"routing","confidence":0.99}]}'
+    )
+    result = validate_worker_output(task, raw)
+    assert result.valid is True
+    assert result.data is not None
+    assert isinstance(result.data["labels"][0], str)
+
+
+def test_clean_string_lists_pass_through_unchanged() -> None:
+    task = _make_task(TaskType.CODE)
+    raw = (
+        '{"task_type":"code","summary":"Fixed.","confidence":0.99,'
+        '"recommended_action":"Apply fix.","needs_clarification":false,'
+        '"clarification_question":null,"changes":["Replace line 5","Remove debug print"]}'
+    )
+    result = validate_worker_output(task, raw)
+    assert result.valid is True
+    assert result.data["changes"] == ["Replace line 5", "Remove debug print"]

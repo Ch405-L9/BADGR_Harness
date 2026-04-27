@@ -55,7 +55,7 @@ models:
       - unknown_base_model_limits
     temperature: 0.1
     max_tokens: 1600
-    timeout_seconds: 120
+    timeout_seconds: 240
     fallback: mistral_worker
 
   dmape_qwen:

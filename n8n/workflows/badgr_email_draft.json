@@ -1,0 +1,123 @@
+{
+  "name": "BADGR — Email Draft Generator",
+  "nodes": [
+    {
+      "id": "email-webhook",
+      "name": "Email Draft Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [160, 300],
+      "parameters": {
+        "path": "badgr-email-draft",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "build-goal",
+      "name": "Build Email Goal",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [400, 300],
+      "parameters": {
+        "mode": "manual",
+        "fields": {
+          "values": [
+            {
+              "name": "goal",
+              "type": "stringValue",
+              "string": "=Write a professional email to {{ $json.body.recipient }} regarding: {{ $json.body.subject }}. Tone: {{ $json.body.tone ?? 'professional' }}. Key points to include: {{ $json.body.key_points ?? 'none specified' }}"
+            },
+            {
+              "name": "task_type",
+              "type": "stringValue",
+              "string": "general"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "run-email-draft",
+      "name": "BADGR Harness — Draft Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [640, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8765/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ goal: $json.goal, task_type: $json.task_type, source: 'n8n:email_draft' }) }}",
+        "options": { "timeout": 180000 }
+      }
+    },
+    {
+      "id": "send-gmail",
+      "name": "Send via Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [900, 220],
+      "parameters": {
+        "operation": "send",
+        "toList": "={{ $('Email Draft Webhook').item.json.body.send_to ?? '' }}",
+        "subject": "={{ $('Email Draft Webhook').item.json.body.subject }}",
+        "message": "={{ $json.summary }}",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail-badgr",
+          "name": "BADGR Gmail"
+        }
+      }
+    },
+    {
+      "id": "return-draft",
+      "name": "Return Draft",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [900, 400],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ draft: $('BADGR Harness — Draft Email').item.json.summary, confidence: $('BADGR Harness — Draft Email').item.json.confidence }) }}",
+        "options": { "responseCode": 200 }
+      }
+    }
+  ],
+  "connections": {
+    "Email Draft Webhook": {
+      "main": [
+        [{ "node": "Build Email Goal", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Email Goal": {
+      "main": [
+        [{ "node": "BADGR Harness — Draft Email", "type": "main", "index": 0 }]
+      ]
+    },
+    "BADGR Harness — Draft Email": {
+      "main": [
+        [
+          { "node": "Send via Gmail", "type": "main", "index": 0 },
+          { "node": "Return Draft", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "description": "POST /badgr-email-draft with { recipient, subject, tone, key_points, send_to }. BADGR drafts the email; optionally sends via Gmail. Requires Gmail OAuth2 credential in n8n. Omit send_to to get draft only."
+  }
+}

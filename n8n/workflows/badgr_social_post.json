@@ -1,0 +1,184 @@
+{
+  "name": "BADGR — Social Media Auto-Post",
+  "nodes": [
+    {
+      "id": "social-trigger",
+      "name": "Social Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [160, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 10,15 * * 1-5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "set-topic",
+      "name": "Pick Today's Topic",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [380, 300],
+      "parameters": {
+        "mode": "manual",
+        "fields": {
+          "values": [
+            {
+              "name": "goal",
+              "type": "stringValue",
+              "string": "Write a short, engaging LinkedIn post (under 200 words) for BADGR LLC highlighting our web development and branding expertise. Include a call to action. Today's theme: {{ ['website redesign ROI', 'brand consistency for small businesses', 'why your website is your best salesperson', 'local Houston business growth through digital presence', 'the cost of an outdated website'][$now.weekday % 5] }}"
+            },
+            {
+              "name": "platform",
+              "type": "stringValue",
+              "string": "linkedin"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "draft-post",
+      "name": "BADGR Harness — Draft Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [620, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8765/task",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ goal: $json.goal, task_type: null, source: 'n8n:social_post' }) }}",
+        "options": { "timeout": 180000 }
+      }
+    },
+    {
+      "id": "review-gate",
+      "name": "Confidence Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [860, 300],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "conf-check",
+              "leftValue": "={{ $json.confidence }}",
+              "rightValue": 0.9,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "telegram-review",
+      "name": "Request Human Review",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1100, 460],
+      "parameters": {
+        "chatId": "={{ $vars.BADGR_TELEGRAM_CHAT_ID }}",
+        "text": "=⚠️ *Low-confidence post draft* ({{ ($('BADGR Harness — Draft Post').item.json.confidence * 100).toFixed(0) }}%)\n\nReview before posting:\n\n{{ $('BADGR Harness — Draft Post').item.json.summary }}",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-badgr",
+          "name": "BADGR Telegram Bot"
+        }
+      }
+    },
+    {
+      "id": "post-linkedin",
+      "name": "Post to LinkedIn (placeholder)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1100, 220],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.linkedin.com/v2/shares",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $vars.LINKEDIN_ACCESS_TOKEN }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ owner: 'urn:li:person:' + $vars.LINKEDIN_PERSON_ID, subject: 'BADGR Update', text: { text: $('BADGR Harness — Draft Post').item.json.summary }, distribution: { linkedInDistributionTarget: { visibilityCode: 'CONNECTIONS_AND_NETWORK' } } }) }}"
+      }
+    },
+    {
+      "id": "confirm-telegram",
+      "name": "Confirm Post Sent",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [1340, 220],
+      "parameters": {
+        "chatId": "={{ $vars.BADGR_TELEGRAM_CHAT_ID }}",
+        "text": "=✅ *LinkedIn post published*\n\n{{ $('BADGR Harness — Draft Post').item.json.summary[:100] }}...",
+        "additionalFields": { "parse_mode": "Markdown" }
+      },
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram-badgr",
+          "name": "BADGR Telegram Bot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Social Schedule Trigger": {
+      "main": [
+        [{ "node": "Pick Today's Topic", "type": "main", "index": 0 }]
+      ]
+    },
+    "Pick Today's Topic": {
+      "main": [
+        [{ "node": "BADGR Harness — Draft Post", "type": "main", "index": 0 }]
+      ]
+    },
+    "BADGR Harness — Draft Post": {
+      "main": [
+        [{ "node": "Confidence Gate", "type": "main", "index": 0 }]
+      ]
+    },
+    "Confidence Gate": {
+      "main": [
+        [{ "node": "Post to LinkedIn (placeholder)", "type": "main", "index": 0 }],
+        [{ "node": "Request Human Review", "type": "main", "index": 0 }]
+      ]
+    },
+    "Post to LinkedIn (placeholder)": {
+      "main": [
+        [{ "node": "Confirm Post Sent", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "description": "Weekdays at 10AM and 3PM: BADGR drafts a topic-rotated LinkedIn post. If confidence >= 90%, posts automatically and confirms via Telegram. If confidence < 90%, routes to human review via Telegram instead. Requires: BADGR_TELEGRAM_CHAT_ID, LINKEDIN_ACCESS_TOKEN, LINKEDIN_PERSON_ID variables. LinkedIn node is a raw HTTP request — swap for official LinkedIn node when available."
+  }
+}

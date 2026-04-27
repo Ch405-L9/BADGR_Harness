@@ -1,0 +1,154 @@
+{
+  "schema_version": "1.1",
+  "document_type": "shn.json handoff",
+  "project": {
+    "name": "BADGR Harness",
+    "project_path": "/home/t0n34781/projects/badgr_harness",
+    "status": "Phase 4 live-validation handoff",
+    "scope": "Entire conversation handoff through Phase 4 preflight and validated orchestrator JSON runs"
+  },
+  "conversation_handoff": {
+    "high_level_goal": {
+      "summary": "Build a cost-efficient BADGR harness that favors deterministic routing, schema validation, local-first execution, and tightly controlled escalation instead of loose multi-agent sprawl.",
+      "core_intent": [
+        "The system should behave like a governed harness, not an always-on swarm of overlapping agents.",
+        "Cheaper capable paths should be used first; premium reasoning should be reserved for hard planning, debugging, synthesis, or escalation.",
+        "The build should integrate around real BADGR operating projects rather than reinventing everything from scratch."
+      ]
+    },
+    "project_evolution": {
+      "start_state": "The early conversation began in design-phase mode around a cost-tiered execution graph and reviewable architecture, not a finished implementation.",
+      "middle_state": "The direction evolved into a practical BADGR-wide harness strategy after grounding the work in surrounding BADGR systems such as lead generation, web performance, market-intel, content/social, and agent experiments.",
+      "current_state": "The conversation has now progressed into active Phase 4 validation, with preflight checks, model-lane alignment, and structured orchestrator output testing becoming the immediate operational focus."
+    },
+    "design_philosophy": {
+      "must_preserve": [
+        "Deterministic first.",
+        "Local first where quality is acceptable.",
+        "Schema-validated structured outputs before trusting downstream behavior.",
+        "Explicit retry, fallback, and escalation logic.",
+        "Minimal moving parts until complexity is proven necessary.",
+        "Integration around existing BADGR assets instead of ornamental rebuilds."
+      ],
+      "anti_patterns": [
+        "Agent sprawl and duplicated intelligence roles.",
+        "Premature heavy orchestration with unclear ROI.",
+        "Blind trust in local-model structured output without validation.",
+        "Optional heavy subsystems becoming core requirements without a concrete use case."
+      ]
+    },
+    "badgr_context": {
+      "why_this_matters": "The harness is intended to unify or govern real BADGR work rather than stay as an abstract framework.",
+      "known_foundations": [
+        "Lead-generation and sales pipeline work.",
+        "Deterministic web-performance tooling.",
+        "Market-intelligence scripting.",
+        "Content and social-lab work.",
+        "Earlier agent and strict-runner experiments."
+      ]
+    },
+    "phase_map": [
+      {
+        "phase": 1,
+        "name": "Vision and constraints",
+        "status": "complete",
+        "focus": "Define BADGR harness purpose, operating boundaries, and anti-sprawl philosophy."
+      },
+      {
+        "phase": 2,
+        "name": "Architecture framing",
+        "status": "complete",
+        "focus": "Separate interface, governance, deterministic tools, local models, retrieval, and premium reasoning."
+      },
+      {
+        "phase": 3,
+        "name": "Grounding in real BADGR assets",
+        "status": "complete",
+        "focus": "Tie the harness to actual BADGR projects and working department foundations."
+      },
+      {
+        "phase": 4,
+        "name": "Live validation",
+        "status": "active",
+        "focus": "Preflight, model alignment, routing-lane confirmation, orchestrator output validation, and observability verification."
+      },
+      {
+        "phase": 5,
+        "name": "Schema hardening and observability",
+        "status": "next",
+        "focus": "Tighten planning/general schemas, inspect logs/reports, and verify fallback/escalation traces."
+      },
+      {
+        "phase": 6,
+        "name": "Controlled expansion",
+        "status": "future",
+        "focus": "Add more realistic BADGR workflows after core trust boundaries are stable."
+      }
+    ],
+    "phase_1_summary": {
+      "summary": "Phase 1 established the harness as a governed, cost-minimized execution system with strict routing, strict schemas, and a strong bias toward deterministic or local-first operation.",
+      "deliverables": [
+        "Architecture intent clarified.",
+        "Role boundaries clarified.",
+        "Warnings about complexity creep captured.",
+        "Continuation handoff expectations defined for Claude Code."
+      ]
+    },
+    "phase_2_summary": {
+      "summary": "Phase 2 reframed the work from pure concept into a practical harness package and continuation path, with emphasis on inspecting and validating the new package before assuming integration success.",
+      "deliverables": [
+        "Package-level continuation point established.",
+        "Roadmap/handoff material drafted.",
+        "Cold-start review assumptions documented for Claude Code."
+      ]
+    },
+    "phase_4_current_read": {
+      "summary": "The current codebase direction supports a real local harness with preflight checks, model registry routing, validation, retry/fallback/escalation behavior, and JSON-only output handling.",
+      "what_is_working_directionally": [
+        "Model roles are explicitly separated in models.yaml.",
+        "The orchestrator normalizes goals, chooses models by task lane, validates outputs, retries once, falls back, and can escalate to supervisor.",
+        "The validator enforces stricter requirements for classification and code/extraction style outputs than for generic tasks."
+      ],
+      "remaining_gaps": [
+        "Planning/general responses currently use the base response shape instead of a dedicated planning schema.",
+        "Logs and reports should be inspected as part of the next validation pass.",
+        "Git is not initialized in the project directory, so change tracking is currently outside Git workflows."
+      ]
+    },
+    "reasoning_behind_code": {
+      "why_this_logic_exists": [
+        "Routing is explicit because hidden agent behavior increases cost and debugging complexity.",
+        "Validation exists because model outputs can be plausible but structurally wrong.",
+        "Retry and fallback exist because a local-first stack needs graceful recovery before escalation.",
+        "Supervisor escalation exists because some requests are ambiguous, underspecified, or too complex for the worker path."
+      ],
+      "specific_logic_patterns_to_understand": [
+        "Primary model selection is task-lane based, not arbitrary.",
+        "If the first worker output fails validation, the orchestrator retries once with a stronger formatting instruction.",
+        "If the retry fails, the orchestrator uses the configured fallback lane.",
+        "If fallback fails, the supervisor can either return a valid result or request clarification."
+      ]
+    },
+    "what_claude_code_should_assume_now": {
+      "assumptions": [
+        "This is no longer only conceptual; the harness has entered real validation behavior.",
+        "The governing philosophy still matters more than adding more layers or tools.",
+        "Any next edits should preserve deterministic-first and validation-first principles.",
+        "The next meaningful improvement is hardening schemas, validating logs/reports, and testing failure paths more deliberately."
+      ],
+      "do_not_assume": [
+        "Do not assume planning output is schema-complete just because it is valid JSON.",
+        "Do not assume logs and reports are correct until inspected.",
+        "Do not assume Git-backed diffing/history exists yet.",
+        "Do not assume every lane has the same level of validator strictness."
+      ]
+    },
+    "next_actions": [
+      "Inspect generated logs and reports from orchestrator runs.",
+      "Add a dedicated planning schema so steps and related fields are enforced.",
+      "Run deliberate clarification and fallback tests under saved-file validation.",
+      "Optionally initialize Git in the project folder before broader refactors.",
+      "Only after those checks, expand toward more realistic BADGR workflows."
+    ]
+  }
+}

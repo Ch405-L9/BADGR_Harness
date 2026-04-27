@@ -1,0 +1,165 @@
+{
+  "document_type": "Claude Code handoff",
+  "document_name": "shn.json",
+  "version": "2.0.0",
+  "created_for": "Claude Code",
+  "last_updated": "2026-04-26",
+  "project": {
+    "name": "badgr_harness",
+    "canonical_path": "/home/t0n34781/projects/badgr_harness",
+    "github_repo": "https://github.com/Ch405-L9/Pro-Hunter-Agent.git",
+    "owner": "Brandon Anthony Grant (Anthony)",
+    "business": "BADGRTechnologies LLC",
+    "uei": "U9GUGKVFGCA9",
+    "description": "Local LLM orchestration harness with RAG corpus, MCP server integration, and Pro Hunter job search subsystem."
+  },
+  "system_overview": {
+    "what_it_is": "badgr_harness is the central AI orchestration platform for BADGRTechnologies LLC. It provides deterministic local LLM routing, strict JSON validation, retry/fallback/supervisor escalation, a 2087-doc RAG knowledge base, and hosts the MCP integration layer for Claude Code sessions.",
+    "subsystems": {
+      "harness_core": "orchestrator.py + router.py + validator.py — classify tasks, route to appropriate model, validate output, retry/fallback/escalate",
+      "rag": "ChromaDB at rag_db/ — two collections: badgr_corpus (2087 docs, AI/tech reference) and job_opportunities (pro_hunter feed)",
+      "mcp": ".mcp.json registers pro-hunter MCP stdio server — exposes job tools to Claude Code",
+      "pro_hunter": "Satellite system at /home/t0n34781/projects/pro_hunter — scrapes/scores jobs, feeds RAG, exposes MCP tools"
+    }
+  },
+  "environment": {
+    "os": "Ubuntu 24.04.4 LTS",
+    "hardware": "AMD Ryzen 5 5500, 16GB RAM, AMD RX 6500 XT",
+    "python": "3.10+ (system) / 3.12 (default)",
+    "chromadb_note": "System python3 has pydantic version conflict with chromadb. Use pro_hunter venv for any chromadb operations: /home/t0n34781/projects/pro_hunter/.venv/bin/python",
+    "ollama_models": {
+      "mistral:7b": "4.4GB — primary worker, parse/score/docs",
+      "nomic-embed-text": "0.3GB — embeddings",
+      "llama3.2:latest": "2.0GB — browser automation",
+      "llama3.2:3b": "2.0GB — fast small tasks",
+      "phi3:mini": "2.2GB — small tasks",
+      "gemma2:2b": "1.6GB — fastest option",
+      "qwen2.5-coder:7b": "4.7GB — code generation",
+      "badgr-analyst:latest": "4.4GB — custom analyst",
+      "qwen2.5:14b": "9.0GB — DO NOT use in pipeline (OOM risk on 16GB)"
+    }
+  },
+  "rag_database": {
+    "path": "/home/t0n34781/projects/badgr_harness/rag_db/",
+    "engine": "ChromaDB PersistentClient",
+    "chromadb_access_command": "/home/t0n34781/projects/pro_hunter/.venv/bin/python (system python has pydantic conflict)",
+    "collections": {
+      "badgr_corpus": {
+        "doc_count": 2087,
+        "purpose": "AI/tech reference knowledge base — papers, guides, validated repos",
+        "metadata_schema": {
+          "source": "filename (PDF/TXT/MD)",
+          "ext": "file extension",
+          "chunk": "integer chunk index",
+          "total_chunks": "integer total chunks for this source"
+        },
+        "status": "READ-ONLY from harness perspective — ingested by corpus_harvest scripts, do not modify"
+      },
+      "job_opportunities": {
+        "doc_count": "grows with pipeline runs (1 as of 2026-04-26)",
+        "purpose": "Scored job postings from pro_hunter pipeline",
+        "metadata_schema": {
+          "job_id": "16-char SHA-256 of job URL",
+          "job_title": "string",
+          "company": "string (empty if null)",
+          "source_site": "site key string",
+          "location_type": "remote/hybrid/onsite/empty",
+          "tech_stack": "pipe-separated string",
+          "fit_score": "string integer 0-100",
+          "skill_profile": "profile key"
+        },
+        "fed_by": "pro_hunter/rag_bridge.py — called automatically after each pipeline run"
+      }
+    }
+  },
+  "mcp_integration": {
+    "config_file": "/home/t0n34781/projects/badgr_harness/.mcp.json",
+    "registered_servers": {
+      "pro-hunter": {
+        "command": "/home/t0n34781/projects/pro_hunter/.venv/bin/python",
+        "args": ["/home/t0n34781/projects/pro_hunter/mcp_server.py"],
+        "tools": [
+          "job_search — scrape and score a URL against a skill profile",
+          "job_query — semantic search over job_opportunities RAG collection",
+          "job_apply — trigger form filling for a job (dry_run=true by default)",
+          "list_jobs — list CSV jobs filtered by min_score",
+          "ingest_jobs_to_rag — bulk push all CSV jobs to RAG"
+        ]
+      }
+    },
+    "how_to_use": "Open Claude Code in /home/t0n34781/projects/badgr_harness. MCP server auto-registers. Use tool names directly in conversation."
+  },
+  "harness_core": {
+    "entry_point": "orchestrator.py",
+    "flow": "task input → router.py (keyword classify) → model selection from models.yaml → worker call → validator.py (strict JSON) → retry once → fallback model → supervisor escalate if still failing → output + log",
+    "key_files": {
+      "orchestrator.py": "Main orchestration loop — dispatch, retry, fallback, escalation",
+      "router.py": "Deterministic keyword router — code/classify/extract/summarize/plan lanes",
+      "validator.py": "Strict JSON schema validation — strips markdown fences, extracts JSON, validates fields",
+      "config.py": "Central settings — paths, timeouts, thresholds",
+      "models.yaml": "Model registry — roles, timeouts, fallback chains",
+      "prompts/": "Per-task-class prompt templates",
+      "schemas/": "Pydantic response models for each task class"
+    },
+    "logs_and_reports": {
+      "logs/": "JSONL event logs — one file per day",
+      "reports/": "Markdown daily reports",
+      "state/": "runtime_state.json — current run state"
+    }
+  },
+  "phase_status": {
+    "phase_1_baseline": "complete",
+    "phase_2_scaffold": "complete — merged into project root",
+    "phase_3_merge_verify": "complete — orchestrator/router/validator/config in place",
+    "phase_4_live_ollama": "complete — live model calls working",
+    "phase_5_logging": "complete — JSONL logs + markdown reports",
+    "phase_6_delegation": "complete — retry/fallback/supervisor chains working",
+    "phase_7_state_memory": "in progress",
+    "phase_8_prompt_schema": "in progress",
+    "phase_9_production": "planned",
+    "pro_hunter_integration": "complete — MCP registered, RAG bridge live"
+  },
+  "worker_delegation_map": {
+    "claude": "Architecture, integration design, final verification, complex reasoning",
+    "mistral:7b": "Parse, score, summarize, document generation — PRIMARY worker",
+    "qwen2.5-coder:7b": "Code generation, debugging, refactoring",
+    "llama3.2:latest": "BrowserUse automation driver, lightweight tasks",
+    "gemma2:2b": "Fast classification, short extractions",
+    "nomic-embed-text": "All vector embeddings (badgr_corpus + job_opportunities)",
+    "badgr-analyst:latest": "Custom analysis tasks"
+  },
+  "known_issues": [
+    {
+      "id": "BH-001",
+      "severity": "medium",
+      "description": "System python3/python3.12 has pydantic version conflict with chromadb. chromadb imports fail outside pro_hunter venv.",
+      "resolution": "Always use /home/t0n34781/projects/pro_hunter/.venv/bin/python for any chromadb/RAG operations."
+    },
+    {
+      "id": "BH-002",
+      "severity": "low",
+      "description": "badgr_corpus metadata lacks skill/topic labels. 2087 docs have only source/chunk/ext. No category tagging.",
+      "resolution": "Run rag_label.py (planned) to enrich metadata with topic/skill tags via local model batch processing."
+    },
+    {
+      "id": "BH-003",
+      "severity": "low",
+      "description": "Ollama request queue pollution: killed Python processes leave orphaned in-flight requests.",
+      "resolution": "Force-unload via keep_alive:0. Restart ollama service if stuck (requires sudo)."
+    }
+  ],
+  "recommended_next_steps": [
+    "Run pro_hunter daily collection to populate job_opportunities RAG",
+    "Test MCP tools from Claude Code session in badgr_harness directory",
+    "Build rag_label.py to add skill/topic metadata to badgr_corpus",
+    "Wire skill-to-corpus mapping so harness can RAG-augment job scoring",
+    "Complete phase 7 persistent state improvements",
+    "Set up cron for both harness health checks and pro_hunter daily runs"
+  ],
+  "quick_reference": {
+    "check_rag_collections": "/home/t0n34781/projects/pro_hunter/.venv/bin/python -c \"import chromadb; c=chromadb.PersistentClient(path='rag_db'); [print(col.name, col.count()) for col in c.list_collections()]\"",
+    "query_badgr_corpus": "python3 rag_query.py",
+    "run_orchestrator": "python3 orchestrator.py",
+    "pro_hunter_daily": ".venv/bin/python -m cli.main run-daily"
+  }
+}

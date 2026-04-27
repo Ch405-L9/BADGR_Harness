@@ -1,0 +1,108 @@
+# RAG Skill → Corpus Query Mapping
+# Maps skill profiles to search terms that retrieve relevant badgr_corpus docs.
+# Used by harness to augment job scoring with knowledge base context.
+
+skill_corpus_map:
+
+  ai-sw-engineer:
+    label: "AI Software Engineer & Developer"
+    corpus_queries:
+      - "LLM integration prompt engineering"
+      - "machine learning production deployment"
+      - "NLP natural language processing pipeline"
+      - "vector database embeddings RAG"
+      - "AI fine-tuning model training"
+    rag_k: 3
+
+  python-automation:
+    label: "Python Automation Engineer"
+    corpus_queries:
+      - "Python automation data pipeline"
+      - "ETL workflow scripting"
+      - "Python FastAPI REST API"
+      - "automation testing CI/CD"
+    rag_k: 3
+
+  ai-agents:
+    label: "AI Agent & LLM Orchestration"
+    corpus_queries:
+      - "LLM agent orchestration multi-agent"
+      - "prompt chaining fallback mechanisms"
+      - "autonomous AI agent workflow"
+      - "LangChain LlamaIndex agent framework"
+    rag_k: 3
+
+  devops-mlops:
+    label: "DevOps & MLOps Engineer"
+    corpus_queries:
+      - "Docker Kubernetes container deployment"
+      - "CI/CD pipeline Jenkins GitHub Actions"
+      - "MLOps model deployment monitoring"
+      - "AWS Azure cloud infrastructure"
+    rag_k: 3
+
+  full-stack-dev:
+    label: "Full Stack Developer"
+    corpus_queries:
+      - "React TypeScript JavaScript frontend"
+      - "Node.js REST API backend"
+      - "full stack web application"
+      - "PostgreSQL MongoDB database"
+    rag_k: 3
+
+  federal-contracts:
+    label: "Federal IT Contractor"
+    corpus_queries:
+      - "federal government AI systems"
+      - "FISMA HIPAA compliance security"
+      - "FedRAMP cloud government"
+      - "SAM.gov contracting NAICS"
+    rag_k: 3
+
+  tech-support:
+    label: "Technical Support Engineer"
+    corpus_queries:
+      - "enterprise networking support SLA"
+      - "troubleshooting server infrastructure"
+      - "documentation knowledge base MTTR"
+    rag_k: 2
+
+  field-support-engineer:
+    label: "Field Support Hardware Engineer"
+    corpus_queries:
+      - "computer vision AI inspection system"
+      - "Linux Windows hybrid deployment"
+      - "field support hardware engineer"
+    rag_k: 2
+
+  workmarket-contractor:
+    label: "Freelance IT & AI Contractor"
+    corpus_queries:
+      - "freelance contractor AI automation"
+      - "remote consulting Python IT"
+    rag_k: 2
+
+# Harness task-class → corpus query mapping
+harness_task_map:
+
+  code:
+    corpus_queries:
+      - "Python code generation best practices"
+      - "software engineering patterns"
+    rag_k: 2
+
+  classify:
+    corpus_queries:
+      - "classification NLP text categorization"
+    rag_k: 2
+
+  summarize:
+    corpus_queries:
+      - "summarization extraction AI"
+    rag_k: 2
+
+  plan:
+    corpus_queries:
+      - "AI systems architecture planning"
+      - "project roadmap technical design"
+    rag_k: 3
