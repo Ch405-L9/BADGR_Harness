@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TaskType(str, Enum):
@@ -24,10 +24,12 @@ class TaskStatus(str, Enum):
 
 
 class Task(BaseModel):
-    task_id: str = Field(..., min_length=3)
-    user_goal: str = Field(..., min_length=3)
-    task_type: TaskType = TaskType.GENERAL
+    model_config = ConfigDict(populate_by_name=True, extra="ignore")
+
+    task_id: str = Field(..., min_length=3, alias="taskid")
+    user_goal: str = Field(..., min_length=3, alias="usergoal")
+    task_type: TaskType = Field(default=TaskType.GENERAL, alias="tasktype")
     constraints: List[str] = Field(default_factory=list)
-    expected_output: str = Field(default="general_result")
-    confidence_required: float = Field(default=0.98, ge=0.0, le=1.0)
-    status: TaskStatus = TaskStatus.QUEUED
+    expected_output: str = Field(default="general_result", alias="expectedoutput")
+    confidence_required: float = Field(default=0.98, ge=0.0, le=1.0, alias="confidencerequired")
+    status: TaskStatus = Field(default=TaskStatus.QUEUED, alias="status")
