@@ -3,35 +3,48 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+
+# Local environment and credentials
 .env
-logs/*.jsonl
-reports/*.md
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Runtime output
+logs/
+reports/
 state/runtime_state.json
-_archive/
-
-# Large binary data — do not commit
-rag_db/
-
-# Stale embedded copy — canonical is /home/t0n34781/projects/pro_hunter
-pro_hunter/
-
-# Build/run output
 output/
-corpus_harvest/
-corpus_harvest_log.txt
-corpus_harvest2_log.txt
+*.log
 
-# Scratch/notes/output — not source
-*.txt
-!README.txt
-RAG_foundation.txt
-testing_output_results.txt
+# Local databases, retrieval stores, model caches, and generated data
+rag_db/
+corpus_harvest/
+model_cache/
+models/
+*.db
+*.sqlite
+*.sqlite3
+
+# Local recordings and private fixtures
+recordings/
+private_fixtures/
+
+# IDE and operating-system artifacts
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Generated workflow exports
+n8n/generated/
+
+# Repository-specific generated or scratch artifacts
+_archive/
 *_test_results.txt
 *_results.txt
 phase*_report.txt
 report_phase*.txt
-(.01)_*.json
-(.01)_*.txt
-(TEST)*.txt
-(CONT.)*.txt
-(ts02)*.txt
