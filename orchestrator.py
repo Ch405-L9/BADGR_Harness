@@ -38,15 +38,8 @@ except ImportError:
         loadmodelregistry as load_model_registry,
     )
 
-try:
-    from schemas.log_schema import EventStatus, HarnessEvent
-except ImportError:
-    from schemas.logschema import EventStatus, HarnessEvent
-
-try:
-    from schemas.task_schema import Task, TaskStatus, TaskType
-except ImportError:
-    from schemas.taskschema import Task, TaskStatus, TaskType
+from schemas.log_schema import EventStatus, HarnessEvent
+from schemas.task_schema import Task, TaskStatus, TaskType
 
 try:
     from validator import ValidationOutcome, validate_worker_output

@@ -9,10 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 # Fields that must be lists of strings — models sometimes return lists of dicts.
 _LIST_STR_FIELDS = {"changes", "labels", "key_points", "steps"}
 
-try:
-    from schemas.task_schema import Task, TaskType
-except ImportError:
-    from schemas.taskschema import Task, TaskType
+from schemas.task_schema import Task, TaskType
 
 
 class ValidationOutcome(BaseModel):
