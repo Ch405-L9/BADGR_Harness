@@ -5,10 +5,7 @@ from typing import Any, Dict, Optional
 
 import yaml
 
-try:
-    from schemas.task_schema import TaskType
-except ImportError:
-    from schemas.taskschema import TaskType
+from schemas.task_schema import TaskType
 
 
 KEYWORD_MAP = {

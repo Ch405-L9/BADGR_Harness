@@ -32,6 +32,7 @@ models/
 # Local recordings and private fixtures
 recordings/
 private_fixtures/
+.unrelated/
 
 # IDE and operating-system artifacts
 .idea/

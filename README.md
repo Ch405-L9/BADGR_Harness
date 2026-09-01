@@ -14,7 +14,7 @@ Optional integration paths in the repository include retrieval, a FastAPI interf
 
 The repository includes source code and tests covering:
 
-- Typed task and event schemas
+- Canonical typed task and event schemas
 - Model registry-based routing
 - Generic versus domain-specific routing boundaries
 - Structured-output validation and task-specific checks
@@ -81,6 +81,12 @@ The main execution path depends on configured local model services. Retrieval pa
 ## What remains private or separately reviewed
 
 Local corpus material, live model configuration, machine-specific MCP configuration, operational handoffs, raw logs, runtime state, and outbound automation workflows are excluded from the core public scope or require separate owner review. See [PUBLIC_SCOPE.md](PUBLIC_SCOPE.md).
+
+## Public-state cleanup
+
+The public branch keeps the canonical schema modules in [schemas/task_schema.py](schemas/task_schema.py) and [schemas/log_schema.py](schemas/log_schema.py). Legacy compatibility imports remain available through a minimal shim only where needed; duplicate implementation files are not kept as independent public definitions.
+
+This avoids import drift and keeps the public code path consistent with the canonical task and event model definitions.
 
 ## License
 
