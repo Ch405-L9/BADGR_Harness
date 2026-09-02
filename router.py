@@ -9,6 +9,7 @@ from schemas.task_schema import TaskType
 
 
 KEYWORD_MAP = {
+    TaskType.RESEARCH: ["research", "web search", "search online", "live web", "source url", "cite", "citation", "sources"],
     TaskType.CODE: ["code", "bug", "fix", "function", "refactor", "python", "script", "syntax"],
     TaskType.CLASSIFICATION: ["classify", "category", "categorize", "route", "label", "tag"],
     TaskType.EXTRACTION: ["extract", "pull", "find fields", "parse", "collect"],

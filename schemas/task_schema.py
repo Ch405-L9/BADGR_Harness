@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class TaskType(str, Enum):
     GENERAL = "general"
+    RESEARCH = "research"
     CLASSIFICATION = "classification"
     EXTRACTION = "extraction"
     CODE = "code"

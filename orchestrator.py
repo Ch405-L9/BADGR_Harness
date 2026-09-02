@@ -246,6 +246,7 @@ def next_task_id() -> str:
 def normalize_task(user_goal: str, task_type_override: Optional[TaskType] = None) -> Task:
     task_type = task_type_override if task_type_override is not None else classify_task(user_goal)
     expected_output = {
+        TaskType.RESEARCH: "research_result",
         TaskType.CODE: "code_result",
         TaskType.CLASSIFICATION: "classification_result",
         TaskType.EXTRACTION: "extraction_result",
@@ -481,6 +482,10 @@ def attempt_model(
 
 
 def run_task(user_goal: str) -> Dict[str, Any]:
+    if classify_task(user_goal) == TaskType.RESEARCH:
+        from web_research import research_goal
+        return research_goal(user_goal)
+
     registry = load_model_registry(MODELS_FILE)
     _run_start = time.monotonic()
     _models_tried: list[str] = []

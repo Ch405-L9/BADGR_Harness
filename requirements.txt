@@ -8,3 +8,5 @@ httpx
 chromadb
 pdfplumber
 requests
+beautifulsoup4
+lxml
