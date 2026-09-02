@@ -107,13 +107,23 @@ def _authority_score(result: SearchResult, goal: str) -> int:
 
 
 def _three_sentence_summary(query: str, results: list[SearchResult]) -> str:
+    def safe_sentence_text(value: str) -> str:
+        value = re.sub(r"(\d)\.(\d)", r"\1 point \2", value)
+        return value.replace(".", ";").replace("!", ";").replace("?", ";").strip(" ;")
+
     if not results:
-        return f'No search results were returned for "{query}". The claim could not be verified from live web evidence. No source-backed answer is available.'
-    excerpts = [re.sub(r"\s+", " ", r.snippet).strip().rstrip(".!") for r in results[:2] if r.snippet]
+        safe_query = safe_sentence_text(query)
+        return f'No search results were returned for "{safe_query}". The claim could not be verified from live web evidence. No source-backed answer is available.'
+    safe_query = safe_sentence_text(query)
+    excerpts = [
+        safe_sentence_text(re.sub(r"\s+", " ", r.snippet).strip())
+        for r in results[:2]
+        if r.snippet
+    ]
     first = excerpts[0] if excerpts else "The leading result did not provide a readable snippet"
     second = excerpts[1] if len(excerpts) > 1 else "No second independent snippet was returned"
     return (
-        f'Live search returned {len(results)} source result(s) for "{query}". '
+        f'Live search returned {len(results)} source result(s) for "{safe_query}". '
         f"The highest-ranked evidence states: {first}. "
         f"A second result reports: {second}."
     )
