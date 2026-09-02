@@ -1,0 +1,12 @@
+pydantic
+pyyaml
+python-dotenv
+pytest
+fastapi
+uvicorn[standard]
+httpx
+chromadb
+pdfplumber
+requests
+beautifulsoup4
+lxml

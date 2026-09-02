@@ -1,0 +1,4 @@
+Screenshot 01_hunter_browser.png dimensions: 1581x325, aspect ratio 4.8646; tiled into 3 horizontal crops with overlap.
+Tile 1 (x=0..599): visible annotation says Pro Hunter may become the web scraping agent; partial BADGR Harness system overview.
+Tile 2 (x=490..1089): table identifies badgr_harness at /home/t0n34781/projects/badgr_harness as central LLM orchestration + RAG corpus + MCP host; Pro Hunter at /home/t0n34781/projects/pro_hunter as job search + scoring + application automation. Text says badgr_harness runs harness core (orchestrator -> router -> validator) and hosts shared ChromaDB at rag_db; Pro Hunter scrapes job sites, scores against skill profiles, stores CSV, and feeds jobs into harness RAG; registered as an MCP server inside badgr_harness sessions.
+Tile 3 remains to be inspected. Screenshot claims are contextual evidence only and may conflict with live sandbox state; authoritative path was absent in this environment.
