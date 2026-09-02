@@ -1,0 +1,267 @@
+C.Walts v0.4 — New Conversation Handoff
+
+Status: Same project space, immediately before Gate 2Date: 2026-08-02Repository: /home/t0n34781/projects/natural-language-flow-ragPrivate GitHub: Ch405-L9/C.WaltsActive branch: feat/narration-generalization-v0.4
+
+Controlling directive
+
+Local-only canonical plan:
+
+README_compass_artificat.md
+
+Owner-confirmed correction:
+
+Correct branch: feat/narration-generalization-v0.4
+
+Incorrect branch shown in directive: feat/natural-flow-rag-activation
+
+The directive remains canonical otherwise.
+
+Committed gate numbering remains:
+
+Gate 2 — select 315 public records
+
+Gate 3 — author 285 custom/private records
+
+Gate 4 — assemble and seal the 600-record evaluation system
+
+Gate 5 — calibrate, freeze thresholds, score holdout once, owner acceptance/RC
+
+Gate 1.2 is the stabilization pass before Gate 2.
+
+Last verified repository state
+
+Latest accepted and pushed commit:
+
+35f59d4f8f3aca71d410182b56873aa32caf419atest: enforce the Stage 1 determinism disposition
+
+Previous Stage 1 implementation:
+
+96d4b073054d6d9991f568c42a28fde2a07902actest: add Gate 1.2 determinism probe
+
+Complete project handoff:
+
+ce4c2b300a3bea940abc69e0acff3f9895d5012fdocs: add complete v0.4 project handoff and completion plan
+
+Expected state:
+
+Branch: feat/narration-generalization-v0.4
+
+HEAD == upstream: 35f59d4f8f3aca71d410182b56873aa32caf419a
+
+Working tree: clean
+
+Version: 0.4.0-dev.2
+
+Gate 2: not begun
+
+Re-measure before relying on this.
+
+Current production state
+
+Last verified:
+
+Production Chroma: 84
+
+BM25: 84
+
+Chroma/BM25 ID parity: exact
+
+evaluation_case in production: 0
+
+Feedback collection: 2
+
+Embedding: nomic-embed-text
+
+Dimension: 768
+
+BADGR Harness MD5: unchanged
+
+The 84 production chunks are not the planned 600 evaluation queries.
+
+Evaluation allocation remains:
+
+600 total
+
+315 public-derived
+
+285 custom/private
+
+300 calibration
+
+300 holdout
+
+Holdout = 90 public + 210 private
+
+Gate 1.2 status
+
+Stage 0 — complete
+
+Baseline verified and recorded.
+
+Stage 1 — complete and independently accepted
+
+Implemented:
+
+scripts/determinism_probe.py
+
+tests/test_determinism_probe.py
+
+docs/evidence/gate1_2-determinism.json
+
+Measured result:
+
+Production vectors: 84
+
+Dimension: 768
+
+Embedding byte stability: true
+
+Fixed-index exact-oracle recall minimum: 1.0
+
+Rebuilt-index exact-oracle recall minimum: 1.0
+
+Fixed-index Kendall tau minimum: 1.0
+
+Rebuilt-index Kendall tau minimum: 1.0
+
+Fixed-index verdict flips: 0
+
+Rebuilt-index verdict flips: 0
+
+Disposition: cosmetic_float_noise
+
+nomic-embed-text stays: true
+
+Thresholds fitted: false
+
+The Stage 1 disposition now requires all seven named criteria. Stage 1 is closed.
+
+Stage 2 — next active work
+
+Canonical Stage 2 purpose:
+
+Read-only coverage measurement.
+
+Identify exact structural/register gaps.
+
+Remediate only measured gaps.
+
+Source only licence-clean material.
+
+No material derived from EVAL-009 wording.
+
+Dry-run, exact chunk accounting, verified backup, mutation checkpoint, reindex, rollback validation.
+
+Freeze corpus after remediation.
+
+Do not start Stage 3 or Gate 2 during Stage 2.
+
+The owner is waiting for the Stage 2.1 coverage-measurement JSON.
+
+Next expected input
+
+The next conversation will receive a .json file from Codex containing the Stage 2.1 coverage measurement.
+
+When it arrives:
+
+Read the JSON in full.
+
+Validate schema, counts, categories, evidence paths, and conclusions.
+
+Compare it to:
+
+README_compass_artificat.md
+
+docs/known-limitations-v0.4.md
+
+docs/C.Walts-v0.4-complete-handoff-report.md
+
+current corpus/source configuration
+
+Separate:
+
+measured gaps;
+
+inferred gaps;
+
+unsupported claims;
+
+safe-to-defer gaps;
+
+gaps requiring remediation before corpus freeze.
+
+Do not infer a corpus shortage from queries ÷ examples.
+
+Treat EVAL-009 as a narrow dense-structure limitation unless the JSON proves broader gaps.
+
+Require exact proposed sources, licences, files, sections, chunk counts, and provenance before approving remediation.
+
+Stop before first production corpus mutation unless the owner explicitly approves it.
+
+Required first response in the new conversation
+
+Start with:
+
+STAGE 2.1 AUDIT
+
+Then provide:
+
+JSON validity.
+
+Measured corpus coverage.
+
+Exact gaps.
+
+Unsupported or overstated conclusions.
+
+Whether remediation is required before corpus freeze.
+
+Approved remediation scope.
+
+Missing evidence.
+
+GO / CONDITIONAL GO / NO-GO for Stage 2.2.
+
+One paste-ready instruction block for Codex.
+
+Do not begin Gate 2.
+
+Non-negotiable constraints
+
+Never:
+
+expose secrets or .env-local;
+
+ask the owner to paste keys;
+
+move immutable tags;
+
+force-push;
+
+rewrite historical evidence;
+
+inspect sealed holdout text;
+
+fit thresholds before Gate 5;
+
+ingest evaluation records into Chroma or BM25;
+
+alter corpus in response to locked-holdout results;
+
+weaken tests;
+
+commit raw public datasets or private holdout content;
+
+mutate production stores without dry run, exact IDs, verified backup, parity verification, and rollback.
+
+FOSS/local first. Stable-and-correct is the controlling clock.
+
+Canonical stop point
+
+Gate 1.2 Stage 1 complete
+
+Stage 2.1 JSON pending
+
+Gate 2 not begun
+
+The next action is to audit the Stage 2.1 JSON and decide whether the proposed corpus remediation is correctly scoped.

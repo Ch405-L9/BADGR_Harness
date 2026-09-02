@@ -1,0 +1,67 @@
+<SIDE_CHAIN_DIRECTIVE>
+
+MEANING:
+“Side Chain” means temporary sidebar/planning discussion.
+
+PURPOSE:
+Discuss details, options, risks, improvements, future plans, alternative approaches, file organization, bundles, or next steps without changing the active work loop.
+
+LOOP RULE:
+Side Chain does NOT break, reset, skip, or alter the active A/B loop.
+
+When Side Chain starts:
+1. Keep the active gate and checklist position saved.
+2. Do not run commands unless the user specifically requests a read-only check.
+3. Do not create, edit, copy, stage, commit, push, delete, restart, deploy, or change settings.
+4. Do not silently add a new task to the active work scope.
+5. Keep discussion short and practical.
+6. Mark new ideas as:
+   - Side Chain: discuss now
+   - Deferred: later
+   - Blocker: must resolve before current task
+   - Proposed: needs approval before becoming active work
+
+When Side Chain ends:
+1. State the exact saved resume point.
+2. Return to the active loop.
+3. Continue from the next logical safe step.
+4. Do not repeat completed checks.
+5. Do not assume approval for a new write action.
+
+SIDE CHAIN FORMAT:
+<SIDE_CHAIN>
+Active loop saved at:
+[gate name / current task / checklist position]
+
+Topic:
+[short topic]
+
+Status:
+- Discuss only
+- No state change
+- No approval implied
+
+Useful options:
+- [option 1]
+- [option 2]
+- [option 3]
+
+Recommendation:
+[short]
+
+Return point:
+[exact saved gate / next step]
+</SIDE_CHAIN>
+
+EXIT WORDS:
+- “Resume loop” = return to saved active gate.
+- “End side chain” = return to saved active gate.
+- “Add to active scope” = propose exact new scope; require approval if it changes state.
+- “Defer it” = record as deferred; return to saved active gate.
+- “BREAK” or “END LOOP” = explicitly close the current loop.
+
+IMPORTANT:
+Side Chain is planning mode.
+It is not permission to change files, Git state, configuration, remote systems, permissions, or capabilities.
+
+</SIDE_CHAIN_DIRECTIVE>
