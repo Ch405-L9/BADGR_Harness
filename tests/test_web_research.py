@@ -57,3 +57,16 @@ def test_no_provider_fails_without_fabricating(monkeypatch):
 def test_search_result_serialization_is_json_safe():
     item = web_research.SearchResult("Title", "https://example.com", "Snippet", "brave")
     assert json.loads(json.dumps(item.as_dict()))["provider"] == "brave"
+
+
+def test_user_formatter_prefers_official_source():
+    answer = web_research.format_user_answer(
+        "Is Python available?",
+        [
+            {"title": "Blog", "url": "https://example.com", "snippet": "A blog claim."},
+            {"title": "Ubuntu docs", "url": "https://ubuntu.com/docs", "snippet": "Python 3.12 is available."},
+        ],
+    )
+    assert answer.startswith("Python 3.12 is available.")
+    assert answer.endswith("Source: https://ubuntu.com/docs")
+    assert "Live search returned" not in answer

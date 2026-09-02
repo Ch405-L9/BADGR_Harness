@@ -728,9 +728,14 @@ def run_task(user_goal: str) -> Dict[str, Any]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the BADGR local harness.")
     parser.add_argument("--goal", required=True, help="User goal to execute through the harness")
+    parser.add_argument("--debug", action="store_true", help="Print the full structured retrieval/debug artifact")
     args = parser.parse_args()
     result = run_task(args.goal)
-    print(json.dumps(result, indent=2))
+    if result.get("task_type") == "research" and not args.debug:
+        from web_research import format_user_answer
+        print(format_user_answer(args.goal, result.get("sources", [])))
+    else:
+        print(json.dumps(result, indent=2))
 
 
 utcnow = utc_now

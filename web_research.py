@@ -173,3 +173,22 @@ def research_goal(goal: str, *, count: int = 5, timeout: float = 15.0) -> dict[s
 
 researchgoal = research_goal
 SearchResultDict = dict[str, str]
+
+
+def format_user_answer(goal: str, sources: list[dict[str, Any]]) -> str:
+    """Render a concise answer from retrieved evidence without exposing diagnostics."""
+    if not sources:
+        return "No source-backed answer was found for this request."
+    official = next(
+        (source for source in sources if any(domain in source.get("url", "").lower() for domain in ("ubuntu.com", ".gov", ".edu", "python.org"))),
+        sources[0],
+    )
+    snippet = re.sub(r"\s+", " ", str(official.get("snippet", "")).strip()).rstrip(".!?")
+    title = str(official.get("title", "Official source")).strip()
+    url = str(official.get("url", "")).strip()
+    if snippet:
+        return f"{snippet}. The top official source is {title}. Source: {url}"
+    return f"The top official source is {title}. Source: {url}"
+
+
+formatuseranswer = format_user_answer
