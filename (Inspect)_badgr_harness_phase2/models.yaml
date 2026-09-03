@@ -1,0 +1,40 @@
+models:
+  qwen_supervisor:
+    provider: ollama
+    model_name: qwen2.5:14b
+    roles:
+      - supervisor
+      - planner
+      - synthesizer
+      - escalation
+    temperature: 0.2
+    max_tokens: 2400
+    timeout_seconds: 180
+    fallback: null
+
+  qwen_coder_worker:
+    provider: ollama
+    model_name: qwen2.5-coder:7b
+    roles:
+      - code
+      - extraction
+      - classification
+      - formatting
+    temperature: 0.1
+    max_tokens: 1600
+    timeout_seconds: 120
+    fallback: mistral_worker
+
+  mistral_worker:
+    provider: ollama
+    model_name: mistral:7b
+    roles:
+      - general
+      - fallback
+      - extraction
+      - summarization
+      - classification
+    temperature: 0.1
+    max_tokens: 1600
+    timeout_seconds: 120
+    fallback: qwen_supervisor
