@@ -1,0 +1,126 @@
+{
+  "project": {
+    "name": "BADGR Harness",
+    "repository": "https://github.com/Ch405-L9/BADGR_Harness",
+    "working_path": "/home/ubuntu/badgr_harness",
+    "branch_checked": "main",
+    "baseline_commit": "0bcadfc3c112e25e53f35f245d47f834ac6c9835"
+  },
+  "request": {
+    "scope": "Basics only and functional per requirements",
+    "desired_behavior": [
+      "Beginner-level language output",
+      "Broad varied topic handling",
+      "Evidence-first and non-fabricated answers",
+      "Accurate answers as a measured target, not an unconditional guarantee",
+      "Updated documentation",
+      "Live testing commands",
+      "Global and short command options",
+      "Beginner math, writing, and technology tests"
+    ]
+  },
+  "completed": {
+    "routing": {
+      "file": "router.py",
+      "change": "Generic factual questions beginning with common question forms and ending with a question mark now use the research path. Explicit code and planning keywords remain higher priority. BADGR-specific questions are excluded from this generic rule so local RAG/model behavior is preserved.",
+      "supported_examples": [
+        "What is 12 times 8?",
+        "What is a clear topic sentence?",
+        "Can a browser read a JSON file?"
+      ]
+    },
+    "model_prompts": {
+      "files": [
+        "orchestrator.py",
+        "prompts/worker_system.txt",
+        "prompts/fallback_system.txt",
+        "prompts/supervisor_system.txt"
+      ],
+      "change": "All roles receive beginner-language, evidence-first, anti-fabrication, and uncertainty guidance. Default task constraints now include beginner_language, evidence_first, and do_not_invent_facts."
+    },
+    "short_command": {
+      "file": "bin/badgr",
+      "change": "Added a wrapper that locates its own repository, loads .env, uses .venv/bin/python when present, supports --debug, and executes the harness."
+    },
+    "documentation": {
+      "files": [
+        "README.md",
+        "docs/BASICS.md"
+      ],
+      "change": "Added setup guidance, isolated virtual-environment instructions, provider configuration, three beginner live tests, full test commands, PATH symlink installation, shell-function globalization, and accuracy boundaries."
+    },
+    "tests": {
+      "file": "tests/test_beginner_basics.py",
+      "coverage": [
+        "Math beginner routing",
+        "Writing beginner routing",
+        "Technology beginner routing",
+        "Source provenance",
+        "Empty-evidence fail-closed output",
+        "Prompt contract",
+        "Code/planning route preservation",
+        "Whitespace and case handling",
+        "No provider/ranking metadata leakage",
+        "No raw ellipsis leakage"
+      ]
+    }
+  },
+  "verification": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q",
+    "result": "108 passed, 1 warning in 3.38s",
+    "warning": "Existing StarletteDeprecationWarning: httpx with starlette.testclient is deprecated; this is not a test failure.",
+    "environment_note": "The sandbox initially lacked pytest, python-dotenv, and chromadb. Minimal dependencies were installed to run the suite. On the target machine, use the repository virtual environment and requirements.txt rather than the system Python."
+  },
+  "live_testing": {
+    "setup": [
+      "cd ~/projects/badgr_harness",
+      "python3 -m venv .venv",
+      "source .venv/bin/activate",
+      "python -m pip install --upgrade pip",
+      "python -m pip install -r requirements.txt",
+      "cp -n .env.example .env"
+    ],
+    "provider": "Set SEARCH_PROVIDER and one private provider key in .env. Do not commit .env.",
+    "tests": {
+      "math": "python orchestrator.py --goal \"What is 12 times 8? Give a beginner explanation and cite one reliable source.\"",
+      "writing": "python orchestrator.py --goal \"What is a clear topic sentence? Give a beginner explanation and cite one reliable source.\"",
+      "technology": "python orchestrator.py --goal \"Can a browser read a JSON file? Give a beginner explanation and cite one reliable source.\"",
+      "debug": "python orchestrator.py --goal \"Can a browser read a JSON file? Give a beginner explanation and cite one reliable source.\" --debug"
+    },
+    "short_form_after_path_install": "badgr \"What is a clear topic sentence? Give a beginner explanation and cite one reliable source.\""
+  },
+  "files_to_inspect_if_troubleshooting": [
+    "README.md",
+    "docs/BASICS.md",
+    "router.py",
+    "orchestrator.py",
+    "web_research.py",
+    "validator.py",
+    "prompts/worker_system.txt",
+    "prompts/fallback_system.txt",
+    "prompts/supervisor_system.txt",
+    "tests/test_beginner_basics.py",
+    "tests/test_router.py",
+    "tests/test_web_research.py",
+    ".env.example",
+    "models.yaml",
+    "requirements.txt",
+    "logs/",
+    "reports/"
+  ],
+  "known_limits": [
+    "The 90-percent accuracy figure is a benchmark target, not a proof supplied by the current unit suite.",
+    "Search snippets are evidence but are not page-level verification. The selected source should be opened for important decisions.",
+    "Confidence is validated for structured local-model output but is not calibrated against a labeled factual benchmark.",
+    "Generic factual routing requires a question-mark form for the new automatic rule; a statement such as 'Explain databases' remains on the general local-model path unless it explicitly requests research or sources.",
+    "Live research requires a configured provider. If none is configured, the harness fails closed instead of fabricating an answer.",
+    "The sandbox clone is a writable copy of the public repository. Changes are local until reviewed and committed or transferred to the user's working tree."
+  ],
+  "recommendations": [
+    "Run the three live tests with a real provider key and save normal and --debug outputs for review.",
+    "Add a labeled benchmark of math, writing, technology, and other domains before claiming a measured 90-percent accuracy rate.",
+    "Add page fetching and passage-level entailment checks before relying on search snippets for high-stakes facts.",
+    "Review the existing FastAPI/httpx warning separately; it does not block the basics baseline.",
+    "After review, commit the changes and push them to the intended branch rather than treating the sandbox clone as the user's original local checkout."
+  ]
+}

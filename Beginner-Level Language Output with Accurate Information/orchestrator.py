@@ -52,7 +52,13 @@ except ImportError:
     _record_state_task = None  # type: ignore[assignment]
 
 
-DEFAULT_CONSTRAINTS = ["strict_json", "ask_if_under_98_confident"]
+DEFAULT_CONSTRAINTS = [
+    "strict_json",
+    "ask_if_under_98_confident",
+    "beginner_language",
+    "evidence_first",
+    "do_not_invent_facts",
+]
 
 PROMPT_NAME_CANDIDATES = {
     "worker": ["worker_system.txt", "workersystem.txt"],
@@ -347,6 +353,11 @@ def build_prompt(task: Task, role_prompt: str, retry_note: str = "") -> str:
         f"Constraints: {', '.join(_constraints(task))}\n"
         f"Required Confidence: {_required_confidence(task)}\n"
         f"User Goal: {_user_goal(task)}\n"
+        "Answer style: use short, plain sentences for a beginner. Explain one "
+        "specialized word the first time you use it. Do not copy long passages. "
+        "Answer only what the evidence or supplied context supports. If the "
+        "evidence is missing or weak, lower confidence and ask for clarification "
+        "instead of guessing.\n"
         f"{rag_block}"
         f"{retry_block}"
         f"Return valid JSON only using this exact shape:\n{schema_hint}\n"
@@ -491,13 +502,13 @@ def run_task(user_goal: str) -> Dict[str, Any]:
     _models_tried: list[str] = []
     _task_errors: list[str] = []
 
-    # Keep the micro-model suggestion for telemetry; deterministic routing remains authoritative.
+    # Sidechain: try micro-model classification before keyword routing
     micro_model = choose_micro_model(registry)
     detected_type: Optional[TaskType] = None
     if micro_model:
         detected_type = model_classify_task(user_goal, micro_model, registry)
 
-    task = normalize_task(user_goal)
+    task = normalize_task(user_goal, task_type_override=detected_type)
     _set_task_attr(task, _task_status("RUNNING"), "status")
 
     # Pre-fetch RAG context so hit/miss is known before logging start event
@@ -509,7 +520,7 @@ def run_task(user_goal: str) -> Dict[str, Any]:
     except Exception:
         pass
 
-    routing_method = "keyword"
+    routing_method = "model" if detected_type is not None else "keyword"
     start_event = make_event(
         task=task,
         action="task_started",
@@ -518,7 +529,6 @@ def run_task(user_goal: str) -> Dict[str, Any]:
         details={
             "task_type": _task_type_value(task),
             "routing_method": routing_method,
-            "model_suggestion": _enum_value(detected_type) if detected_type is not None else None,
             "rag_hit": _rag_hit,
         },
     )

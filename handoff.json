@@ -1,0 +1,320 @@
+{
+  "schema_version": "1.0",
+  "document_type": "shn.json handoff",
+  "document_name": "handoff.json",
+  "created_for": "next agent / reviewer continuing the live-web smoke test",
+  "created_at": "2026-09-03T06:30:00-04:00",
+  "updated_at": "2026-09-03T02:32:00-04:00",
+  "status": "live research path completed on current tree (Brave/SerpAPI boundary). Historical Tavily-sidecar Run 1 remains 5/20. Re-run of the Ubuntu benchmark now returns a cited official Ubuntu URL via SerpAPI.",
+  "do_not": [
+    "Do not treat this as a command script. Suggestions below are diagnostic options, not a required sequence.",
+    "Do not commit .env, API keys, or shell history that contains secrets.",
+    "Do not surgically repair ~/.local/lib/python3.12/site-packages/ pydantic unless the chosen venv itself is broken.",
+    "Do not recreate ~/.venv or reinstall system Python as first-line work.",
+    "Do not chase hermes-agent / transformers pip conflict warnings from the shared ~/.venv reinstall.",
+    "Do not assume the Tavily sidecar still exists in the current working tree. As of this handoff it does not.",
+    "Do not open the investigation copy and treat it as the live harness."
+  ],
+
+  "paths": {
+    "canonical_live_repo": "/home/t0n34781/projects/badgr_harness",
+    "wrong_copy_that_looks_empty_or_stale": "/home/t0n34781/workspace/natural-flow-audit/badgr_harness_investigation/badgr_harness",
+    "why_the_copy_misleads": "The investigation folder is a thin snapshot (~70 files). It lacks web_research.py, docs/WEB_RESEARCH.md, tests/test_web_research.py, and the RESEARCH router path. Opening it in Cursor makes the live-web work appear missing. Always open the canonical_live_repo.",
+    "shared_venv_used_for_smoke_test": "/home/t0n34781/.venv/",
+    "repo_local_venv_also_present": "/home/t0n34781/projects/badgr_harness/.venv/",
+    "venv_boundary": "Smoke-test instructions used source ~/.venv/bin/activate. Demo docs (docs/DEMO_SCRIPT.md, USAGE.md) often say source .venv/bin/activate (repo-local). Those are different interpreters. Confirm which python with `which python` before judging imports.",
+    "do_not_repair": "/home/t0n34781/.local/lib/python3.12/site-packages/",
+    "system_python_that_picked_up_corrupt_user_local_pydantic": "/usr/bin/python3",
+    "requirements": "/home/t0n34781/projects/badgr_harness/requirements.txt",
+    "env_file_private": "/home/t0n34781/projects/badgr_harness/.env",
+    "env_example_safe": "/home/t0n34781/projects/badgr_harness/.env.example",
+    "orchestrator": "/home/t0n34781/projects/badgr_harness/orchestrator.py",
+    "router": "/home/t0n34781/projects/badgr_harness/router.py",
+    "web_research_module": "/home/t0n34781/projects/badgr_harness/web_research.py",
+    "web_research_tests": "/home/t0n34781/projects/badgr_harness/tests/test_web_research.py",
+    "web_research_docs": "/home/t0n34781/projects/badgr_harness/docs/WEB_RESEARCH.md",
+    "demo_script": "/home/t0n34781/projects/badgr_harness/docs/DEMO_SCRIPT.md",
+    "search_baseline_changelog": "/home/t0n34781/projects/badgr_harness/SEARCH_BASELINE_CHANGELOG.md",
+    "web_research_report": "/home/t0n34781/projects/badgr_harness/REPORT_WEB_RESEARCH_BASELINE.md",
+    "task_schema": "/home/t0n34781/projects/badgr_harness/schemas/task_schema.py",
+    "daily_log": "/home/t0n34781/projects/badgr_harness/logs/2026-09-03.jsonl",
+    "daily_report": "/home/t0n34781/projects/badgr_harness/reports/2026-09-03.md",
+    "legacy_project_handoff": "/home/t0n34781/projects/badgr_harness/shn.json",
+    "github": "https://github.com/Ch405-L9/Pro-Hunter-Agent.git"
+  },
+
+  "if_files_are_hard_to_find": {
+    "opened_wrong_folder": "If web_research.py is missing, the workspace is almost certainly the investigation copy. Switch to /home/t0n34781/projects/badgr_harness.",
+    "tavily_sidecar_not_in_orchestrator": "Grep for TAVILY_API_KEY, _live_web_context, LIVE WEB RESEARCH EVIDENCE. If those strings are absent, you are looking at the current Brave/SerpAPI research boundary, not the patched Tavily sidecar that existed during Run 1 on BADGR-Lab.",
+    "research_path_current_tree": "Look at router.py KEYWORD_MAP first key TaskType.RESEARCH, orchestrator.py run_task() early return to web_research.research_goal, and main() format_user_answer for non-debug research output.",
+    "gitignored_runtime": ".env, logs/, reports/, rag_db/, .venv/ are gitignored. They can exist on disk and still look absent in git status.",
+    "pycache_permission_issue": "Prior session used PYTHONDONTWRITEBYTECODE=1 specifically to avoid writing __pycache__ when a permission error blocked bytecode. Keep that env var for smoke runs; do not chown system caches as a first move.",
+    "duplicate_schema_modules": "schemas/task_schema.py is the current module (has RESEARCH). schemas/taskschema.py is a legacy alias-style file. Prefer task_schema.py unless imports fail.",
+    "legacy_shn_files": "shn.json is the older project-wide Claude Code handoff (dated 2026-04-26). phase4_shn.json and phase6_shn_handoff.json are earlier phase packets. This file is the smoke-test packet; do not overwrite those unless asked."
+  },
+
+  "objective_and_constraints": {
+    "objective": "Get BADGR Harness importing cleanly, then run a 3-run live-web smoke/benchmark for video, starting with the Ubuntu 24.04 / Python 3.12 official-source question.",
+    "constraints": [
+      "Use an existing venv; do not rebuild Python or the venv unless that venv is broken.",
+      "Isolate from system python3 and the corrupted user-local Pydantic under ~/.local.",
+      "Do not modify unrelated application work just to force a grade.",
+      "Do not fabricate citations if live search did not run.",
+      "Preserve pre-existing working-tree changes; this smoke test is not a license to revert other in-progress harness work.",
+      "Keep secrets in .env only."
+    ],
+    "benchmark_prompt": "Use live web research to answer: Is Python 3.12 currently available for Ubuntu 24.04 LTS? Prefer an official Ubuntu source, give me the source URL, and summarize the answer in 3 sentences.",
+    "grading_rubric_20pts": {
+      "source_authority": 4,
+      "claim_accuracy": 5,
+      "citation_support": 5,
+      "evidence_sufficiency": 3,
+      "instruction_following": 3
+    },
+    "expected_authoritative_shape": "Prefer an official Ubuntu source URL (ubuntu.com documentation is the intended class of source, not a third-party PPA how-to). Answer in three sentences / the documented demo contract. Cite the URL."
+  },
+
+  "environment_work": {
+    "verdict": "venv is needed. Use it. Do not use /usr/bin/python3 for this smoke test.",
+    "why": "System python3 loads corrupted user-local Pydantic from ~/.local/lib/python3.12/site-packages/. The harness schemas import pydantic BaseModel, ConfigDict, Field. That import is the gate.",
+    "reinstall_target": "/home/t0n34781/.venv/ (NOT ~/.local)",
+    "reinstall_result_as_reported": {
+      "status": "success",
+      "notable_line": "Successfully installed ... pydantic-2.13.5 ...",
+      "acceptable_side_effect": "Force-reinstall upgraded packages beyond bare requirements.txt pins. Acceptable for smoke if import and run succeed. Pin/reconcile later; do not derail the video for it.",
+      "warnings_to_ignore_for_now": "Dependency conflicts involving hermes-agent and transformers in the same shared ~/.venv."
+    },
+    "verification_intended": {
+      "which_python": "should be under /home/t0n34781/.venv/",
+      "pydantic_check": "PYDANTIC OK: <version> with BaseModel, ConfigDict, Field importable",
+      "orchestrator_check": "ORCHESTRATOR IMPORT: OK"
+    },
+    "pycache": {
+      "issue": "Bytecode write permission problems appeared earlier.",
+      "workaround_used": "PYTHONDONTWRITEBYTECODE=1 on python invocations",
+      "suggestion": "Keep the env var for smoke runs. Only investigate filesystem ownership if imports still fail with that var set."
+    }
+  },
+
+  "tavily_and_sidecar_history": {
+    "direct_api_test_as_remembered_in_session": "A direct Tavily HTTP call was reported as HTTP 200 earlier in the session. That proves the key/network can work. It does not prove orchestrator.py called Tavily during Run 1.",
+    "grep_from_the_run1_working_copy": {
+      "file": "orchestrator.py as grepped on BADGR-Lab after Run 1",
+      "live_web_markers": [
+        "344: web_ctx = getattr(task, \"_web_ctx_cache\", \"\")",
+        "346: --- LIVE WEB RESEARCH EVIDENCE ---",
+        "348: --- END LIVE WEB RESEARCH EVIDENCE ---",
+        "495: def _live_web_context(user_goal: str) -> str:",
+        "544: web_ctx = _live_web_context(user_goal)",
+        "546: object.__setattr__(task, \"_web_ctx_cache\", web_ctx)"
+      ],
+      "tavily_markers": [
+        "497: api_key = os.getenv(\"TAVILY_API_KEY\")",
+        "503: https://api.tavily.com/search"
+      ],
+      "what_that_proves": "At the moment of that grep, a Tavily sidecar was present in that orchestrator.py and wired into prompt construction via _web_ctx_cache.",
+      "what_that_does_not_prove": "That Run 1 actually performed the HTTP call, that evidence was non-empty, or that the model used it. Empty key, silent except, skipped fetch, or unused prompt block would all still produce a model-only JSON answer."
+    },
+    "current_working_tree_as_of_this_handoff": {
+      "tavily_sidecar_present": false,
+      "strings_absent": ["TAVILY_API_KEY", "_live_web_context", "_web_ctx_cache", "LIVE WEB RESEARCH EVIDENCE", "api.tavily.com"],
+      "what_is_present_instead": "A separate research boundary: web_research.py using Brave then SerpAPI, TaskType.RESEARCH, orchestrator.run_task early-return, CLI --debug vs formatted user answer.",
+      "orchestrator_research_hook_lines": {
+        "run_task_early_return": "orchestrator.py around 484-487: if classify_task(user_goal) == TaskType.RESEARCH: return research_goal(user_goal)",
+        "cli_format": "orchestrator.py around 729-739: if task_type == research and not --debug, print format_user_answer(...); else dump JSON"
+      },
+      "implication": "The file Run 1 grepped and the file now on disk are not the same implementation. Either the Tavily patch was overwritten by the Brave/SerpAPI work, lived only in an unsaved/other copy, or the session grepped a buffer that is no longer this checkout. Next agent should treat this as a code-path fork, not a missing grep skill."
+    }
+  },
+
+  "run_1": {
+    "executed": true,
+    "cwd": "~/projects/badgr_harness",
+    "env_loaded": true,
+    "prompt": "Use live web research to answer: Is Python 3.12 currently available for Ubuntu 24.04 LTS? Prefer an official Ubuntu source, give me the source URL, and summarize the answer in 3 sentences.",
+    "raw_output": {
+      "task_type": "classification",
+      "summary": "Python 3.12 is available on Ubuntu 24.04 LTS (Noble Numbat), and it can be installed via the deadsnakes PPA repository.",
+      "confidence": 0.99,
+      "recommended_action": "To install Python 3.12 on Ubuntu 24.04 LTS, follow these steps: \n1. Add the deadsnakes PPA by running sudo add-apt-repository ppa:deadsnakes/ppa\n2. Update the package list with sudo apt update\n3. Install Python 3.12 with sudo apt install python3.12",
+      "needs_clarification": false,
+      "clarification_question": null,
+      "labels": ["Python", "Ubuntu", "Installation"]
+    },
+    "grade": {
+      "total": "5/20",
+      "source_authority": {"score": "0/4", "result": "FAIL — no source cited"},
+      "claim_accuracy": {"score": "5/5", "result": "PASS on the core availability claim"},
+      "citation_support": {"score": "0/5", "result": "FAIL — no URL/source"},
+      "evidence_sufficiency": {"score": "0/3", "result": "FAIL — no evidence shown"},
+      "instruction_following": {"score": "0/3", "result": "Partial — answered, but ignored source + 3-sentence requirements; scored 0"}
+    },
+    "why_it_failed_architecturally": [
+      "Output is a worker JSON classification object, not a source-backed research answer.",
+      "No URL at all, so authority and citation scores cannot pass.",
+      "Recommended action is deadsnakes PPA install steps. The prompt asked for an official Ubuntu source, not a third-party PPA recipe.",
+      "Three-sentence summary + source URL contract was not followed.",
+      "task_type classification means the live-web intent did not win routing in the copy that ran, or the model was forced into the classification JSON schema after routing."
+    ]
+  },
+
+  "baseline_context": {
+    "earlier_failure_remembered": "A still-weaker baseline (reported as 1/20 in the unfinished Instant-tool outline) existed before harness import was even healthy. Treat 1/20 as session memory unless a saved transcript of that exact output is attached; the concrete artifact in this packet is Run 1 at 5/20.",
+    "logs_on_disk_2026_09_03": "logs/2026-09-03.jsonl around 02:38–02:54 UTC shows four planning successes on qwen2.5:14b with rag_hit true. Those events do not look like the classification JSON Run 1 paste (different task_type). Do not assume those log lines are Run 1."
+  },
+
+  "proven_vs_unproven": {
+    "proven": [
+      "Harness can import and emit JSON after the ~/.venv force-reinstall (Run 1 returned structured output).",
+      "Pydantic 2.x with ConfigDict was installable into ~/.venv (reported 2.13.5).",
+      "The Run 1 answer is consistent with parametric/RAG knowledge (deadsnakes, Noble Numbat) rather than a cited ubuntu.com page.",
+      "On the grepped Run 1 copy, Tavily helper functions existed in orchestrator.py.",
+      "Current checkout has a distinct Brave/SerpAPI web_research boundary and RESEARCH routing."
+    ],
+    "not_proven": [
+      "That Tavily was invoked during Run 1.",
+      "That LIVE WEB RESEARCH EVIDENCE was non-empty in the model prompt.",
+      "That TAVILY_API_KEY was loaded into that process (set -a; source .env does not prove the key name exists).",
+      "That Runs 2 and 3 exist.",
+      "That the current Brave/SerpAPI path would pass the same rubric live; SEARCH_BASELINE_CHANGELOG.md itself says owner-side live-provider verification was still required in that workstream."
+    ]
+  },
+
+  "planned_runs_not_executed": {
+    "note": "Superseded. Demo-script Runs 2 and 3 were executed on 2026-09-03 after workspace was switched to the live repo. See completed_live_runs.",
+    "historical_pause_reason": "Originally paused until Tavily invocation was proven on the sidecar copy. That copy is gone; the live tree uses web_research.py."
+  },
+  "completed_live_runs": {
+    "interpreter": "/home/t0n34781/.venv/bin/python",
+    "pydantic": "2.13.5",
+    "routing_on_benchmark_prompt": "research",
+    "provider_keys_presence": {
+      "TAVILY_API_KEY": "SET (unused by current web_research.py)",
+      "BRAVE_SEARCH_API_KEY": "UNSET",
+      "SERPAPI_API_KEY": "SET",
+      "SEARCH_PROVIDER": "UNSET (defaults to auto: Brave then SerpAPI)"
+    },
+    "code_change_required": false,
+    "why_no_code_change": "Current orchestrator already early-returns RESEARCH goals to web_research.research_goal. Keyword map places RESEARCH before CODE, so 'python' does not steal the Ubuntu prompt. SerpAPI is configured; Brave is not, so auto-fallback uses SerpAPI.",
+    "run_1_historical_sidecar": "classification JSON / deadsnakes / 5/20 — see run_1",
+    "run_1_current_tree_normal": {
+      "output": "Yes, Python 3.12 is currently available for Ubuntu 24.04 LTS (Noble Numbat).\nUbuntu’s official documentation lists Python 3.12 as the available Python 3 version for that release.\nSource: https://ubuntu.com/developers/docs/reference/availability/python/",
+      "notes": "Matches docs/WEB_RESEARCH.md and format_user_answer special-case. That renderer fires only when live ranking selected that exact Ubuntu developers URL."
+    },
+    "run_2_debug": {
+      "task_type": "research",
+      "provider": "serpapi",
+      "live": true,
+      "source_count": 5,
+      "query": "Is Python 3.12 currently available for Ubuntu 24.04 LTS?",
+      "first_source": "https://ubuntu.com/developers/docs/reference/availability/python/",
+      "ubuntu_official_in_results": true,
+      "deadsnakes_in_urls": false,
+      "what_this_proves": "A live provider was called on the current tree. Evidence reached the research module. User-facing output can cite an official Ubuntu URL. This is the missing proof the Tavily sidecar Run 1 never supplied."
+    },
+    "run_3_captured_artifact": {
+      "path": "/tmp/badgr-web-research-demo.txt",
+      "stdout_matches_run_1_current_tree": true
+    }
+  },
+
+  "architectural_limitations": {
+    "two_research_designs": {
+      "sidecar_into_ollama_prompt": "Tavily fetch stuffed into the worker prompt, then the local model still emits lane JSON (classification/code/etc.). The model can ignore evidence, invent deadsnakes, and omit URLs because the schema does not require sources.",
+      "hard_research_boundary": "Current tree: classify RESEARCH first, skip Ollama for that lane, call web_research.research_goal, optionally format_user_answer. Citations come from the provider payload, not from the LLM choosing to cite."
+    },
+    "why_sidecar_plus_classification_schema_is_fragile": "Even a perfect Tavily block cannot pass the rubric if the worker schema has no source_url field and format:json plus classification hint trains the model to emit labels and recommended_action.",
+    "keyword_router_traps": "router.py KEYWORD_MAP is first-match. Current tree puts RESEARCH first (live web, source url, cite, sources). CODE still contains 'python'. If RESEARCH is missing or ordered after CODE, the Ubuntu/Python prompt can fall into code or other lanes. Classification output on Run 1 suggests that copy's classifier did not treat the goal as RESEARCH, or a later step overwrote type into the classification JSON shape.",
+    "web_research_current_limits": "Snippets only; no page fetch/parse. format_user_answer has a special-case Ubuntu/Python 3.12 renderer when the selected URL is exactly ubuntu.com/developers/docs/reference/availability/python/. That can look like a perfect benchmark without proving general research quality. Authority heuristic prefers ubuntu.com / python.org / .gov / .edu but does not verify page content.",
+    "provider_keys_in_current_tree": ".env.example documents BRAVE_SEARCH_API_KEY, SERPAPI_API_KEY, SEARCH_PROVIDER=auto. It does not document TAVILY_API_KEY. A Tavily-only .env would not feed web_research.py.",
+    "qwen2_5_14b": "Legacy shn.json warns OOM risk on 16GB. 2026-09-03 logs used qwen2.5:14b for planning. Do not casually retarget the smoke test onto that model."
+  },
+
+  "preexisting_work_to_preserve": {
+    "note": "This repo already contains a substantial web-research baseline (web_research.py, tests, docs, orchestrator RESEARCH branch). Do not delete it to resurrect Tavily unless the owner explicitly wants Tavily instead of Brave/SerpAPI.",
+    "also_preserve": "RAG, MCP, n8n workflows, phase reports, schemas, validator JSON enforcement, models.yaml routing.",
+    "investigation_copy": "Leave the natural-flow-audit copy alone unless asked to sync it. It is not the source of truth."
+  },
+
+  "security_and_credentials": {
+    "never_commit": [".env", "API keys", "pem/key material"],
+    "possible_key_names": ["TAVILY_API_KEY", "BRAVE_SEARCH_API_KEY", "SERPAPI_API_KEY"],
+    "suggestion": "When checking whether a key is present, print SET/UNSET only. Do not print values. Do not paste .env into chat or this JSON.",
+    "tavily_vs_brave": "Run 1 session assumed Tavily. Current module assumes Brave/SerpAPI. Confirm which provider the owner wants before writing a new adapter."
+  },
+
+  "probable_outcomes": [
+    {
+      "id": "A",
+      "hypothesis": "On the Run 1 copy, Tavily was never called (missing key, exception swallowed, function not reached because routing never hit the cache-fill).",
+      "likely_symptoms": "No Tavily dashboard usage, no outbound api.tavily.com, empty or missing evidence block, model answers from memory (deadsnakes).",
+      "if_true": "Connecting a live provider on the path that actually executes is the real fix. In the current tree that path is web_research.py, not a prompt sidecar."
+    },
+    {
+      "id": "B",
+      "hypothesis": "Tavily ran and evidence reached the model, but the classification JSON schema and worker instructions caused the model to ignore URLs and emit a PPA how-to.",
+      "likely_symptoms": "Provider logs show a search; output still has no URL and task_type classification.",
+      "if_true": "Prompt-stuffing is the wrong layer. Require sources in the output contract or bypass the LLM for research, which the current web_research boundary already attempts."
+    },
+    {
+      "id": "C",
+      "hypothesis": "The Tavily patch and the Brave/SerpAPI research module are two successive attempts; the latter replaced the former on disk after Run 1.",
+      "likely_symptoms": "Exactly the current tree: no Tavily strings; RESEARCH routing present.",
+      "if_true": "Do not re-implement Tavily unless Brave/SerpAPI keys are missing and Tavily is the only available provider. Grade the current research path on its own terms with --debug to see sources."
+    },
+    {
+      "id": "D",
+      "hypothesis": "Live research would pass the Ubuntu special-case formatter if Brave/SerpAPI returns that exact ubuntu.com developers URL, and still fail other questions.",
+      "likely_symptoms": "Run 1-like prompt looks perfect; a different current-fact prompt has weak snippets or wrong domain.",
+      "if_true": "Treat the Ubuntu renderer as demo sugar, not as proof of general citation quality. Prefer a second question that is not hardcoded in format_user_answer."
+    },
+    {
+      "id": "E",
+      "hypothesis": "Wrong interpreter: repo .venv vs ~/.venv vs /usr/bin/python3.",
+      "likely_symptoms": "Import errors return, or an older orchestrator bytecode runs, or pydantic fails only outside the intended venv.",
+      "if_true": "which python / python -c 'import orchestrator, pydantic; print(pydantic.__file__)' before any grade rerun. Keep using a venv; do not repair ~/.local."
+    }
+  ],
+
+  "suggestions_not_a_runbook": {
+    "orientation": "Decide which research implementation the owner wants to grade: resurrected Tavily sidecar, or current Brave/SerpAPI boundary. Mixing them will waste the video.",
+    "smallest_honest_next_checks": [
+      "Confirm workspace is /home/t0n34781/projects/badgr_harness and that orchestrator.py matches the intended design (Tavily strings vs web_research import).",
+      "Confirm the interpreter is the intended venv.",
+      "Confirm which provider keys are SET without printing them.",
+      "If using the current tree, a debug-mode research run would show whether live sources exist; a non-debug run shows what the user/video would capture.",
+      "If the goal is to know whether a sidecar ran historically, provider dashboard usage or a one-line log around the HTTP call is stronger evidence than another blind benchmark rerun.",
+      "If routing is still classification/code on a live-web prompt, inspect router KEYWORD_MAP order and whether run_task's RESEARCH early-return is reachable."
+    ],
+    "smallest_correction_classes": [
+      "Routing: ensure live-web language cannot lose to 'python' in CODE or generic classification.",
+      "Boundary: keep research off the classification JSON schema so URLs cannot be dropped as optional prose.",
+      "Evidence: fail closed when no live hits, rather than letting Ollama invent deadsnakes.",
+      "Citation: user-facing output should include a concrete URL; debug can keep provider internals.",
+      "Do not expand into page scraping, RAG relabeling, or venv recreation unless the chosen path is blocked."
+    ],
+    "video_caution": "A hardcoded Ubuntu formatter plus a cooperative search snippet can look like a 20/20 on this one prompt. Grade instruction-following and source identity, not only that the word Ubuntu appears."
+  },
+
+  "accomplished": [
+    "Identified that system Python plus ~/.local Pydantic is the wrong environment.",
+    "Chose ~/.venv force-reinstall of requirements.txt instead of repairing user-site pydantic.",
+    "Reported successful pydantic 2.13.5 install into that venv and a working orchestrator import.",
+    "Executed Run 1 end-to-end; harness returned JSON (no crash).",
+    "Graded Run 1 at 5/20 and named the architectural miss (classification + deadsnakes, no URL).",
+    "Grep on the Run 1 copy showed a Tavily sidecar was at least present in that file.",
+    "Recorded that the current canonical tree implements Brave/SerpAPI web_research instead of that sidecar.",
+    "On the current tree, re-ran the Ubuntu benchmark: routing=research, provider=serpapi, live=true, official Ubuntu URL cited.",
+    "Executed demo Run 2 (--debug provenance) and Run 3 (captured stdout artifact)."]
+  ],
+
+  "failed_or_incomplete": [
+    "Run 1 failed the citation/authority/instruction rubric (5/20).",
+    "Did not prove Tavily executed during the historical sidecar Run 1 (that copy is gone).",
+    "Did not re-add Tavily into web_research.py; SerpAPI already satisfied live search.",
+    "Did not pin/reconcile ~/.venv vs repo .venv vs requirements.txt.",
+    "Did not reconcile ~/.venv vs repo .venv vs requirements pins.",
+    "Did not reconcile Tavily sidecar vs Brave/SerpAPI module; those are divergent designs.",
+    "Earlier Instant/Mini path failed to write this handoff file; this document is that missing deliverable."
+  ]
+}

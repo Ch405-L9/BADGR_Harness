@@ -74,7 +74,7 @@ def test_model_classify_task_returns_type_on_valid_response(monkeypatch) -> None
     assert result == TaskType.EXTRACTION
 
 
-def test_run_task_uses_model_routing_when_micro_available(monkeypatch) -> None:
+def test_run_task_keeps_deterministic_routing_when_micro_available(monkeypatch) -> None:
     monkeypatch.setattr(orchestrator, "load_model_registry", lambda _: {"mock": {}})
     monkeypatch.setattr(orchestrator, "choose_micro_model", lambda reg: "llama3.2:3b")
     monkeypatch.setattr(
@@ -84,24 +84,33 @@ def test_run_task_uses_model_routing_when_micro_available(monkeypatch) -> None:
     monkeypatch.setattr(orchestrator, "choose_primary_model", lambda *a, **kw: "mistral:7b")
     monkeypatch.setattr(orchestrator, "append_log", lambda e: None)
     monkeypatch.setattr(orchestrator, "append_report", lambda *a, **kw: None)
+
+    routed_types: list[TaskType] = []
+
+    def capture_attempt(task, *args, **kwargs):
+        routed_types.append(task.task_type)
+        return ValidationOutcome(
+            valid=True,
+            data={
+                "task_type": "code",
+                "summary": "Fixed.",
+                "confidence": 0.99,
+                "recommended_action": "Apply the fix.",
+                "needs_clarification": False,
+                "clarification_question": None,
+                "changes": ["fixed the Python bug"],
+                "code_block": None,
+            },
+        )
+
     monkeypatch.setattr(
         orchestrator,
         "attempt_model",
-        lambda *a, **kw: ValidationOutcome(
-            valid=True,
-            data={
-                "task_type": "classification",
-                "summary": "Classified.",
-                "confidence": 0.99,
-                "recommended_action": "Route.",
-                "needs_clarification": False,
-                "clarification_question": None,
-                "labels": ["routing"],
-            },
-        ),
+        capture_attempt,
     )
-    result = orchestrator.run_task("route this request please")
-    assert result["task_type"] == "classification"
+    result = orchestrator.run_task("Fix this Python bug")
+    assert routed_types == [TaskType.CODE]
+    assert result["task_type"] == "code"
 
 
 def test_run_task_routes_domain_goal_to_analyst(monkeypatch) -> None:
