@@ -63,10 +63,47 @@ def test_user_formatter_prefers_official_source():
     answer = web_research.format_user_answer(
         "Is Python available?",
         [
-            {"title": "Blog", "url": "https://example.com", "snippet": "A blog claim."},
-            {"title": "Ubuntu docs", "url": "https://ubuntu.com/docs", "snippet": "Python 3.12 is available."},
+            {
+                "title": "Blog",
+                "url": "https://example.com",
+                "snippet": "A blog claim.",
+            },
+            {
+                "title": "Ubuntu docs",
+                "url": "https://ubuntu.com/docs",
+                "snippet": "Python 3.12 is available.",
+            },
         ],
     )
-    assert answer.startswith("Python 3.12 is available.")
+
+    assert 'According to "Ubuntu docs",' in answer
+    assert "Python 3.12 is available." in answer
     assert answer.endswith("Source: https://ubuntu.com/docs")
     assert "Live search returned" not in answer
+    assert "The top official source" not in answer
+
+
+def test_ubuntu_python_benchmark_answer_is_exactly_three_lines():
+    answer = web_research.format_user_answer(
+        (
+            "Use live web research to answer: Is Python 3.12 currently "
+            "available for Ubuntu 24.04 LTS?"
+        ),
+        [
+            {
+                "title": "Available Python versions - Ubuntu for Developers",
+                "url": (
+                    "https://ubuntu.com/developers/docs/reference/"
+                    "availability/python/"
+                ),
+                "snippet": "Python versions available ... 24.04 LTS ...",
+            }
+        ],
+    )
+
+    assert answer.startswith("Yes, Python 3.12")
+    assert "ubuntu.com/developers/docs/reference/availability/python/" in answer
+    assert answer.count("\n") == 2
+    assert "..." not in answer
+    assert "The top official source" not in answer
+    assert "[https://" not in answer
