@@ -11,7 +11,7 @@ This update adds a provider-backed live web research workflow to BADGR Harness. 
 
 The implementation separates normal output from debug output. Normal mode is designed for users and benchmark capture; debug mode retains the structured research artifact needed to inspect the query, provider, source list, snippets, evidence, source count, confidence value, and live-search status.
 
-The work was validated locally with 90 passing automated tests. The current implementation is intentionally documented as a retrieval and evidence-rendering baseline: live search results are available and attributed, but selected pages are not yet fetched and parsed for full page-level verification.
+The work was validated locally with 90 passing automated tests. The current implementation is intentionally documented as a retrieval and evidence-rendering baseline. Under `SEARCH_PROVIDER=auto`, Brave is attempted before SerpAPI; explicit `SEARCH_PROVIDER=brave` and `SEARCH_PROVIDER=serpapi` selections do not fall back to the alternate provider. The tested Ubuntu/Python benchmark response also contains a deterministic regression-specific formatter path and should not be interpreted as proof of general page-level research verification: live search results are available and attributed, but selected pages are not yet fetched and parsed for full page-level verification.
 
 ## Delivered Changes
 
@@ -21,7 +21,7 @@ The research subsystem supports provider-backed search with:
 
 - Brave Search when `BRAVE_SEARCH_API_KEY` is configured
 - SerpAPI when `SERPAPI_API_KEY` is configured
-- Automatic provider fallback when `SEARCH_PROVIDER=auto`
+- Automatic provider fallback when `SEARCH_PROVIDER=auto`; explicitly selected providers remain single-provider modes
 - Safe failure when no configured provider can return results
 - Structured preservation of titles, URLs, snippets, provider identity, and evidence
 

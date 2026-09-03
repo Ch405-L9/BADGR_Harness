@@ -107,3 +107,102 @@ def test_ubuntu_python_benchmark_answer_is_exactly_three_lines():
     assert "..." not in answer
     assert "The top official source" not in answer
     assert "[https://" not in answer
+
+
+def test_auto_falls_back_from_brave_to_serpapi(monkeypatch):
+    monkeypatch.setenv("SEARCH_PROVIDER", "auto")
+    monkeypatch.setenv("BRAVE_SEARCH_API_KEY", "brave-key")
+    monkeypatch.setenv("SERPAPI_API_KEY", "serp-key")
+
+    brave_calls = []
+    serpapi_calls = []
+
+    def fake_brave(query, count, timeout):
+        brave_calls.append(query)
+        raise web_research.ResearchError("Brave unavailable")
+
+    def fake_serpapi(query, count, timeout):
+        serpapi_calls.append(query)
+        return [
+            web_research.SearchResult(
+                "Python",
+                "https://python.org",
+                "Official Python site.",
+                "serpapi",
+            )
+        ]
+
+    with patch.object(web_research, "_brave", side_effect=fake_brave), \
+         patch.object(web_research, "_serpapi", side_effect=fake_serpapi):
+        result = web_research.research_goal("research Python official source")
+
+    assert result["provider"] == "serpapi"
+    assert result["sources"][0]["provider"] == "serpapi"
+    assert brave_calls == ["research Python official source"]
+    assert serpapi_calls == ["research Python official source"]
+
+
+def test_explicit_brave_does_not_fall_back(monkeypatch):
+    monkeypatch.setenv("SEARCH_PROVIDER", "brave")
+    monkeypatch.setenv("BRAVE_SEARCH_API_KEY", "brave-key")
+    monkeypatch.setenv("SERPAPI_API_KEY", "serp-key")
+
+    with patch.object(
+        web_research,
+        "_brave",
+        side_effect=web_research.ResearchError("Brave unavailable"),
+    ), patch.object(
+        web_research,
+        "_serpapi",
+        side_effect=AssertionError("SerpAPI must not be called"),
+    ):
+        with pytest.raises(
+            web_research.ResearchError,
+            match="No live search results",
+        ):
+            web_research.research_goal("research Python")
+
+
+def test_explicit_serpapi_does_not_fall_back(monkeypatch):
+    monkeypatch.setenv("SEARCH_PROVIDER", "serpapi")
+    monkeypatch.setenv("BRAVE_SEARCH_API_KEY", "brave-key")
+    monkeypatch.setenv("SERPAPI_API_KEY", "serp-key")
+
+    with patch.object(
+        web_research,
+        "_serpapi",
+        side_effect=web_research.ResearchError("SerpAPI unavailable"),
+    ), patch.object(
+        web_research,
+        "_brave",
+        side_effect=AssertionError("Brave must not be called"),
+    ):
+        with pytest.raises(
+            web_research.ResearchError,
+            match="No live search results",
+        ):
+            web_research.research_goal("research Python")
+
+
+def test_auto_continues_after_empty_brave_result(monkeypatch):
+    monkeypatch.setenv("SEARCH_PROVIDER", "auto")
+    monkeypatch.setenv("BRAVE_SEARCH_API_KEY", "brave-key")
+    monkeypatch.setenv("SERPAPI_API_KEY", "serp-key")
+
+    with patch.object(web_research, "_brave", return_value=[]), \
+         patch.object(
+             web_research,
+             "_serpapi",
+             return_value=[
+                 web_research.SearchResult(
+                     "Python",
+                     "https://python.org",
+                     "Official Python site.",
+                     "serpapi",
+                 )
+             ],
+         ) as serp:
+        result = web_research.research_goal("research Python")
+
+    assert result["provider"] == "serpapi"
+    serp.assert_called_once()

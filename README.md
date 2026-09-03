@@ -56,7 +56,7 @@ Historical reports may contain additional execution counts or phase evidence. Th
 
 Goals that explicitly request live web research, online search, citations, or source URLs route to `web_research.py` instead of allowing the local model to answer without evidence. The boundary uses Brave Search first and SerpApi as a fallback when the corresponding private API keys are configured in `.env`. Results include the provider, query, source URLs, snippets, evidence excerpts, and a three-sentence summary. If no provider is configured or all providers fail, the boundary fails closed rather than fabricating an answer.
 
-See [SEARCH_BASELINE_CHANGELOG.md](SEARCH_BASELINE_CHANGELOG.md) for configuration and test commands.
+See [docs/WEB_RESEARCH.md](docs/WEB_RESEARCH.md) for research configuration, behavior, and test commands.
 
 ## Architecture
 
